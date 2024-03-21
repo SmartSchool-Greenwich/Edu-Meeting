@@ -49,6 +49,6 @@ urlpatterns = [
     path('enter-academic-year-code/', views.enter_academic_year_code, name='enter_academic_year_code_url'),
 
     path('terms_policies/', views.term_policy, name='term_policy'),
-    
+    path('error_404/', views.error_404, name='error_404'),
 
 ]

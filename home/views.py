@@ -870,3 +870,7 @@ def reject_contribution(request, contribution_id):
     
 def term_policy(request):
     return render(request, 'terms_policies.html')
+
+    
+def error_404(request):
+    return render(request, '404.html')
