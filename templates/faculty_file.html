@@ -1,4 +1,4 @@
-{% extends "header.html" %}
+{% extends "header_footer.html" %}
 {%load static%}
 {% block content %}
 
@@ -135,27 +135,39 @@
                   <h4>Title: {{contribution.title}}</h4>
                   <hr>
                   <h6>Contributor: {{ user_profile.fullname }}</h6>
-                  <h6>Post Date: {{ contribution.createAt|date:"F d, Y" }}</h6>
+                  <h6>Post Date: {{ contribution.createAt|date:"F d, Y" }} | Faculty: {{ faculty.name }}</h6>
                 </div>
               </div>
               {% endfor %}
-              {% for file in contribution.files.all %}
-              <div class="user-content">
-                {% if file.word %}
+              {% if contribution.files.count > 0 %}
+                {% for file in contribution.files.all %}
+                <div class="user-content">
+                  {% if file.word %}
                   <div class="content" style="margin-bottom: 10px;">
                     <h5 class="truncated">Document: <a href="{{ file.word.url }}">{{ file.word.name }}</a></h5>
                   </div>
-                  {% else %}
-                  <h5 style="margin-bottom: 10px;">Document: Do not have document files</h5>
+                  {% else%}
+                  <div class="content" style="margin-bottom: 10px;">
+                    <h5 class="truncated" style="margin-bottom: 10px;">Do not content document file.</h5>
+                  </div>
                   {% endif %} {% if file.img %}
                   <div class="content">
                     <h5 class="truncated">Image: <a href="{{ file.img.url }}">{{ file.img.name }}</a></h5>
                   </div>
                   {% else %}
-                  <h5>Image: Do not have image files</h5>
+                  <div class="content" style="margin-bottom: 10px;">
+                    <h5 class="truncated" style="margin-bottom: 10px;">Do not content image file.</h5>
+                  </div>
                   {% endif %}
-              </div>
-              {% endfor %}
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="user-content">
+                  <div class="content" style="margin-bottom: 10px;">
+                    <h5 class="truncated" style="margin-bottom: 10px;">Do not content any files.</h5>
+                  </div>
+                </div>
+              {% endif %}
               {% if not is_guest and not is_director %}
               <div class="feedback-box">
                 <h5 style="margin-bottom: 5px;">Contribution feedbacks:</h5>

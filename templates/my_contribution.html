@@ -1,4 +1,4 @@
-{% extends "header.html" %}
+{% extends "header_footer.html" %}
 {%load static%}
 {% block content %}
 
@@ -81,98 +81,5 @@
         </form>
       </div>
     </section>
-
-    <section class="contact-us" id="contact">
-      <div class="footer">
-        <p>Copyright © 2022 Edu Meeting Co., Ltd. All Rights Reserved.
-          <br>
-          Design: <a href="#" target="_parent" title="free css templates">Trinh, Khoi, Kiet, Ratana and Hieu.</a>
-          <br>
-          Distibuted By: <a href="#" target="_blank" title="Build Better UI, Faster">Edu Meeting Inc.</a>
-        </p>
-      </div>
-    </section>
-
-    <!-- Scripts -->
-    <!-- Bootstrap core JavaScript -->
-    <script src="{%static 'vendor/jquery/jquery.min.js' %}"></script>
-    <script src="{%static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-
-    <script src="{%static 'js/isotope.min.js' %}"></script>
-    <script src="{%static 'js/owl-carousel.js' %}"></script>
-    <script src="{%static 'js/lightbox.js' %}"></script>
-    <script src="{%static 'js/tabs.js' %}"></script>
-    <script src="{%static 'js/video.js' %}"></script>
-    <script src="{%static 'js/slick-slider.js' %}"></script>
-    <script src="{%static 'js/custom.js' %}"></script>
-    <script>
-      //according to loftblog tut
-      $(".nav li:first").addClass("active");
-
-      var showSection = function showSection(section, isAnimate) {
-        var direction = section.replace(/#/, ""),
-          reqSection = $(".section").filter(
-            '[data-section="' + direction + '"]'
-          ),
-          reqSectionPos = reqSection.offset().top - 0;
-
-        if (isAnimate) {
-          $("body, html").animate(
-            {
-              scrollTop: reqSectionPos,
-            },
-            800
-          );
-        } else {
-          $("body, html").scrollTop(reqSectionPos);
-        }
-      };
-
-      var checkSection = function checkSection() {
-        $(".section").each(function () {
-          var $this = $(this),
-            topEdge = $this.offset().top - 80,
-            bottomEdge = topEdge + $this.height(),
-            wScroll = $(window).scrollTop();
-          if (topEdge < wScroll && bottomEdge > wScroll) {
-            var currentId = $this.data("section"),
-              reqLink = $("a").filter("[href*=\\#" + currentId + "]");
-            reqLink
-              .closest("li")
-              .addClass("active")
-              .siblings()
-              .removeClass("active");
-          }
-        });
-      };
-
-      $(".main-menu, .responsive-menu, .scroll-to-section").on(
-        "click",
-        "a",
-        function (e) {
-          e.preventDefault();
-          showSection($(this).attr("href"), true);
-        }
-      );
-
-      $(window).scroll(function () {
-        checkSection();
-      });
-    </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        var rejectButtons = document.querySelectorAll('.reject-btn');
-        rejectButtons.forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            var contributionId = btn.getAttribute('data-contribution-id');
-            var form = document.getElementById('rejectForm');
-            form.action = '/ad/contribution/reject/' + contributionId + '/';
-            document.getElementById('contributionId').value = contributionId; // Set hidden input value
-          });
-        });
-      });
-    </script>
-  </body>
-</html>
 
 {% endblock content %}

@@ -1,164 +1,429 @@
-{% load static %}
+{%load static%}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <title>Smart School - Register</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="TemplateMo">
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900" rel="stylesheet">
+
+  <title>Education Meeting HTML5 Template</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+
+  <!-- Additional CSS Files -->
+  <link rel="stylesheet" href="{% static 'css/fontawesome.css' %}">
+  <link rel="stylesheet" href="{% static 'css/templatemo-edu-meeting.css' %}">
+  <link rel="stylesheet" href="{% static 'css/owl.css' %}">
+  <link rel="stylesheet" href="{% static 'css/lightbox.css' %}">
+  <!--
+
+TemplateMo 569 Edu Meeting
+
+https://templatemo.com/tm-569-edu-meeting
+
+-->
 </head>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
-    *{
-        margin: 0;
-        padding: 0;
-        font-family: 'poppins',sans-serif;
+
+<body>
+  <!-- ***** Header Area Start ***** -->
+  <header class="header-area header-sticky">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <nav class="main-nav">
+            <!-- ***** Logo Start ***** -->
+            <a href="{% url "home" %}" class="logo">
+              Edu Meeting
+            </a>
+            <!-- ***** Logo End ***** -->
+            <!-- ***** Menu Start ***** -->
+            <ul class="nav">
+              <li>
+                <a href="{% url "home" %}">Home</a>
+              </li>
+              {% if is_admin %}
+              <li>
+                  <a href="{% url "statistical_analysis" %}">Administrator</a>
+              </li>
+              {% endif %}
+              {% if is_cordinator or is_director %}
+              <li>
+                  <a href="{% url "manage_contributions" %}">Contribution Management</a>
+              </li>
+              {% endif %}
+              <li class="has-sub">
+                <a href="javascript:void(0)">Contributions</a>
+                <ul class="sub-menu">
+                    {% if show_faculties %}
+                        {% for f in faculties %}
+                        <li>
+                            <a href="{% url 'faculty_files' f.id %}">{{ f.name }}</a>
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                    {% if is_director %}
+                    <li>
+                        <a href="{% url 'show_contributions' %}">Download Zip Files</a>
+                    </li>
+                    {% endif %}
+                    {% if is_student %}
+                    <li>
+                      <a href="{% url 'my_contributions' %}">View My Contributions</a>
+                    </li>
+                    {% endif %}
+                </ul>
+              </li>            
+              {% if can_upload and is_student and not is_cordinator and not is_director and not is_admin %}
+              <li>
+                <a href="{% url 'file_upload'%}">Upload Contributions</a>
+              </li>
+              {% endif %}
+              {% if user.is_authenticated %}
+              <!-- Display the form or user-specific content -->
+              <li >
+                <a href="{%url 'profile' %}">hello {{request.user.username}}</a>
+              </li>
+              <li>
+                <a href="{% url 'logout'%}">Logout</a>
+              </li>
+              {% else %}
+              <li>
+                <a href="{% url 'login' %}">Login</a>
+              </li>
+              {% endif %}
+            </ul>
+            <a class='menu-trigger'>
+              <span>Menu</span>
+            </a>
+            <!-- ***** Menu End ***** -->
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- ***** Header Area End ***** -->
+
+  <style>
+
+    .section main-banner{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      width: 100%;
     }
-    section{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        width: 100%;
-        
-        background: url('{% static 'background6.jpg' %}')no-repeat;
-        background-position: center;
-        background-size: cover;
-    }
+
     .form-box{
-        position: relative;
-        width: 400px;
-        max-height: 100%;
-        background: transparent;
-        border: 2px solid rgba(46,42,42,0.5);
-        border-radius: 20px;
-        backdrop-filter: blur(15px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        
+      position: relative;
+      width: 750px;
+      height: 500px;
+      background: transparent;
+      border: 2px solid rgba(46,42,42,0.5);
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      margin: 180px auto;
     }
+
+    .form-value-container{
+      padding: 0 30px;
+    }
+
+    .input-container{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
     h2{
-        font-size: 2em;
-        color: #000;
-        text-align: center;
+      margin-top: 30px;
+      font-size: 2em;
+      color: #fff;
+      text-align: center;
     }
+
     .inputbox{
-        position: relative;
-        margin: 30px 0;
-        width: 310px;
-        border-bottom: 2px solid #000;
+      position: relative;
+      margin: 30px 0;
+      width: 310px;
+      border-bottom: 2px solid #000;
     }
+
     .inputbox label{
-        position: absolute;
-        top: 50%;
-        left: 5px;
-        transform: translateY(-50%);
-        color: #000;
-        font-size: 1em;
-        pointer-events: none;
-        transition: .5s;
+      position: absolute;
+      top: 50%;
+      left: 5px;
+      transform: translateY(-50%);
+      color: #fff;
+      font-size: 1em;
+      pointer-events: none;
+      transition: .5s;
     }
+
+    .selectbox label{
+      top: 50%;
+      left: 5px;
+      color: #fff;
+      font-size: 1em;
+    }
+
     input:focus ~ label,
     input:valid ~ label{
     top: -5px;
     }
+
     .inputbox input {
-        width: 100%;
-        height: 50px;
-        background: transparent;
-        border: none;
-        outline: none;
-        font-size: 1em;
-        padding:0 35px 0 5px;
-        color: #000;
+      width: 100%;
+      height: 50px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 1em;
+      padding:0 35px 0 5px;
+      color: #fff;
     }
+
     .inputbox ion-icon{
-        position: absolute;
-        right: 8px;
-        color: #000;
-        font-size: 1.2em;
-        top: 20px;
+      position: absolute;
+      right: 8px;
+      color: #fff;
+      font-size: 1.2em;
+      top: 20px;
     }
 
     button{
-        width: 100%;
-        height: 40px;
-        border-radius: 40px;
-        background: #fff;
-        border: none;
-        outline: none;
-        cursor: pointer;
-        font-size: 1em;
-        font-weight: 600;
+      width: 50%;
+      height: 40px;
+      border-radius: 40px;
+      background: #fff;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
     }
+
+    button:hover{
+      background: #3CF;
+    }
+
     .register{
-        font-size: .9em;
-        color: #000;
-        text-align: center;
-        margin: 25px 0 10px;
+      font-size: .9em;
+      color: #000;
+      text-align: center;
+      margin: 25px 0 10px;
     }
+
+    .register p {
+      text-decoration: none;
+      color: #fff;
+    }
+
     .register p a{
-        text-decoration: none;
-        color: #000;
-        font-weight: 600;
+      text-decoration: none;
+      font-weight: 600;
     }
+
     .register p a:hover{
-        text-decoration: underline;
+      text-decoration: underline;
     }
-</style>
-<body>
-    <section>
-        <div class="form-box">
-            <div class="form-value">
-                <h2>Register</h2>
-                <form class="form" method="POST" action="">
-                    {% csrf_token %}
-                    <div class="form-value-container">
-                        <div class="inputbox">
-                            <ion-icon name="mail-outline"></ion-icon>
-                            <input type="text" name="username" required>
-                            <label for="">Username</label>
-                        </div>
-                        <div class="inputbox">
-                            <ion-icon name="text-outline"></ion-icon>
-                            <input type="text" name="fullname" required>
-                            <label for="">Full Name</label>
-                        </div>
-                        <div class="inputbox">
-                            <ion-icon name="call-outline"></ion-icon>
-                            <input type="text" name="phone" required>
-                            <label for="">Phone</label>
-                        </div>
-                        <div class="inputbox">
-                            <ion-icon name="lock-closed-outline"></ion-icon>
-                            <input type="password" name="password" required>
-                            <label for="">Password</label>
-                        </div>
-                        <div class="inputbox">
-                            <ion-icon name="lock-closed-outline"></ion-icon>
-                            <input type="password" name="repassword" required>
-                            <label for="">Confirm Password</label>
-                        </div>
-                        <div>
-                            <label for="">Skip this part if you not a student.</label>
-                        </div>
-                        <div style="margin-bottom: 25px">
-                            <label for="id_faculty">Faculty</label>
-                              <select name="faculty" id="id_faculty">
-                              <option value="" >--Please choose an option--</option>
-                                  {% for faculty in faculties %}
-                              <option value="{{ faculty.id }}" >{{ faculty.name }} </option>
-                                  {% endfor %}
-                              </select>
-                        </div>
+
+    .custom-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      width: 130%;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .custom-select:focus {
+      outline: none;
+      border-color: #007bff; /* Adjust this color as needed */
+    }
+    
+    /* Style for the dropdown arrow */
+    .custom-select:after {
+      content: '\25BC'; /* Unicode character for down arrow */
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: #555; /* Adjust this color as needed */
+    }
+    
+    /* Style for the options */
+    .custom-select option {
+      padding: 8px 12px;
+    }
+    
+  </style>
+
+
+  <!-- ***** Main Banner Area Start ***** -->
+  <section class="section main-banner" id="top" data-section="section1">
+    <video autoplay muted loop id="bg-video">
+      <source src="{% static 'images/course-video.mp4' %}" type="video/mp4"/>
+    </video>
+
+    <div class="video-overlay header-text">
+      <div class="form-box">
+          <h2>Register</h2>
+          <form class="form" method="POST" action="">
+            {% csrf_token %}
+            <div class="input-container">
+              <div class="form-value-container col-lg-6">
+                <div class="inputbox">
+                    <ion-icon name="mail-outline"></ion-icon>
+                    <input type="text" name="username" required>
+                    <label for="">Username</label>
+                </div>
+                <div class="inputbox">
+                  <ion-icon name="lock-closed-outline"></ion-icon>
+                  <input type="password" name="password" required>
+                  <label for="">Password</label>
+                </div>
+                <div class="inputbox">
+                    <ion-icon name="lock-closed-outline"></ion-icon>
+                    <input type="password" name="repassword" required>
+                    <label for="">Confirm Password</label>
+                </div>
+              </div>
+              <div class="form-value-container col-lg-6">
+                <div class="inputbox">
+                  <ion-icon name="text-outline"></ion-icon>
+                  <input type="text" name="fullname" required>
+                  <label for="">Full Name</label>
+                </div>
+                <div class="inputbox">
+                    <ion-icon name="call-outline"></ion-icon>
+                    <input type="text" name="phone" required>
+                    <label for="">Phone</label>
+                </div>
+                <div class="selectbox" style="margin-bottom: 25px">
+                  <div class="row">
+                    <div class="col-3">
+                      <label for="id_faculty">Role: </label>
                     </div>
-                    <button type="submit">Register</button>
-                    <div class="register">
-                        <p>Back to <a href="{% url "login" %}">Login</a></p>
+                    <div class="col-7">
+                      <select name="role" id="id_role" class="custom-select">
+                      <option value="" >* Choose a Role</option>
+                          {% for role in roles %}
+                      <option value="{{ role.id }}" >{{ role }} </option>
+                          {% endfor %}
+                      </select>
                     </div>
-                </form>
+                  </div>
+                </div>
+                <div class="selectbox" style="margin-bottom: 25px">
+                  <div class="row">
+                    <div class="col-3">
+                      <label for="id_faculty">Faculty: </label>
+                    </div>
+                    <div class="col-7">
+                      <select name="faculty" id="id_faculty" class="custom-select">
+                        <option value="">* Choose a Faculty</option>
+                        {% for faculty in faculties %}
+                        <option value="{{ faculty.id }}">{{ faculty.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-    </section>
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+            <div class="text-center">
+              <button type="submit">Register</button>
+            </div>
+            <div class="register">    
+              <p>Back to <a href="{% url "login" %}">Login</a></p>
+            </div>
+          </form>
+      </div>
+    </div>
+  </section>
+  <!-- ***** Main Banner Area End ***** -->
+
+
+  <section class="contact-us" id="contact">
+    <div class="footer">
+      <p>Copyright © 2022 Edu Meeting Co., Ltd. All Rights Reserved.
+        <br>
+        Develop & Design: <a href="#" target="_parent" title="free css templates">Trinh, Khoi, Kiet, Ratana and Hieu.</a>
+        <br>
+        Distibuted By: <a href="#" target="_blank" title="Build Better UI, Faster">Edu Meeting Inc.</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="{%static 'vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{%static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+  <script src="{%static 'js/isotope.min.js' %}"></script>
+  <script src="{%static 'js/owl-carousel.js' %}"></script>
+  <script src="{%static 'js/lightbox.js' %}"></script>
+  <script src="{%static 'js/tabs.js' %}"></script>
+  <script src="{%static 'js/video.js' %}"></script>
+  <script src="{%static 'js/slick-slider.js' %}"></script>
+  <script src="{%static 'js/custom.js' %}"></script>
+  <script>
+    //according to loftblog tut
+    $('.nav li:first').addClass('active');
+
+    var showSection = function showSection(section, isAnimate) {
+      var
+        direction = section.replace(/#/, ''),
+        reqSection = $('.section').filter('[data-section="' + direction + '"]'),
+        reqSectionPos = reqSection.offset().top - 0;
+
+      if (isAnimate) {
+        $('body, html').animate({
+          scrollTop: reqSectionPos
+        },
+          800);
+      } else {
+        $('body, html').scrollTop(reqSectionPos);
+      }
+
+    };
+
+    var checkSection = function checkSection() {
+      $('.section').each(function () {
+        var
+          $this = $(this),
+          topEdge = $this.offset().top - 80,
+          bottomEdge = topEdge + $this.height(),
+          wScroll = $(window).scrollTop();
+        if (topEdge < wScroll && bottomEdge > wScroll) {
+          var
+            currentId = $this.data('section'),
+            reqLink = $('a').filter('[href*=\\#' + currentId + ']');
+          reqLink.closest('li').addClass('active').
+            siblings().removeClass('active');
+        }
+      });
+    };
+
+    $('.main-menu, .responsive-menu, .scroll-to-section').on('click', 'a', function (e) {
+      e.preventDefault();
+      showSection($(this).attr('href'), true);
+    });
+
+    $(window).scroll(function () {
+      checkSection();
+    });
+  </script>
 </body>
 </html>

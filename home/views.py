@@ -15,6 +15,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
+from django.db.models import Q
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -41,6 +42,7 @@ def login_view(request):
 
 def register_view(request):
     faculties = Faculties.objects.all()
+    roles = Role.objects.filter(Q(name="student") | Q(name="guest"))
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -49,6 +51,8 @@ def register_view(request):
         phone = request.POST.get('phone')
         password = request.POST.get('password')
         repassword = request.POST.get('repassword')
+        role = request.POST.get('role', None)
+
         faculty_id = request.POST.get('faculty', None)
 
         if all([username, fullname, phone, password, repassword]):
@@ -59,17 +63,19 @@ def register_view(request):
                     user = User.objects.create_user(username=username, password=password, email=email)
                     faculty = Faculties.objects.get(id=faculty_id) if faculty_id else None
                     
-                    userprofile = UserProfile(user=user, fullname=fullname, email=email, phone=phone, faculty=faculty)
-                    userprofile.save()
+                    userprofile = UserProfile.objects.create(user=user, fullname=fullname, email=email, phone=phone, faculty=faculty)
+                    userprofile.roles.set(role)
                     return redirect('login')
             else:
                 return redirect('register')
         
-    return render(request, 'register.html', {'faculties': faculties})
+    return render(request, 'register.html', {'faculties': faculties,'roles':roles})
+
 
 def logout_view(request):
     logout(request)
     return redirect('home')
+
 
 def get_user_roles_and_permissions(user):
     permissions = {
@@ -721,7 +727,7 @@ def delete_role(request, role_id):
 
 def all_contributions_view(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
-    contributions = Contributions.objects.all() 
+    contributions = Contributions.objects.all()
     is_cordinator = False
     is_director = False
     
@@ -733,14 +739,20 @@ def all_contributions_view(request):
         else:
             is_cordinator = True
 
+    # Xử lý dữ liệu tìm kiếm từ form
+    query = request.GET.get('q')
+    if query:
+        contributions = contributions.filter(
+            Q(user__fullname__icontains=query) |  # Tìm kiếm theo username của người upload
+            Q(title__icontains=query)  # Tìm kiếm theo tên contribution
+        )
+
     context = {
         'contributions': contributions,
         'is_director': is_director,
         'is_cordinator': is_cordinator,
     }
     return render(request, 'manage_contributions.html', context)
-
-
 
     
 #account:
