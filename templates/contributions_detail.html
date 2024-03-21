@@ -163,6 +163,8 @@
                     {% for comment in comments %}
                     <p>
                       <strong>{{ comment.user.fullname }}: </strong>{{comment.comment }}
+                      <br>
+                      <small>Posted on {{ comment.createAt|date:"Y-m-d H:i:s" }}</small>
                     </p>
                     {% endfor %}
                   {% endif %}

@@ -52,7 +52,7 @@ https://templatemo.com/tm-569-edu-meeting
                   <a href="{% url "statistical_analysis" %}">Administrator</a>
               </li>
               {% endif %}
-              {% if is_cordinator %}
+              {% if is_cordinator or is_director %}
               <li>
                   <a href="{% url "manage_contributions" %}">Contribution Management</a>
               </li>

@@ -71,62 +71,73 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 
-def home(request):
-    can_upload = True
-    is_admin = False
-    is_cordinator = False
-    is_director = False
-    is_student = False
-    is_guest = False
-    show_faculties = True  
-    faculties = Faculties.objects.none() 
-    
-    public_contributions = Contributions.objects.filter(public=True)
+def get_user_roles_and_permissions(user):
+    permissions = {
+        'can_upload': True,
+        'is_admin': False,
+        'is_cordinator': False,
+        'is_director': False,
+        'is_student': False,
+        'is_guest': False,
+        'show_faculties': True,
+        'faculties': Faculties.objects.none(),
+    }
 
-    if request.user.is_authenticated:
+    if user.is_authenticated:
         try:
-            user_profile = request.user.userprofile
+            user_profile = user.userprofile
             faculty = user_profile.faculty
-            # academic_year = faculty.academicYear if faculty else None
             roles = [role.name for role in user_profile.roles.all()]
 
-            # if academic_year and timezone.now() < academic_year.closure:
-            #     can_upload = True
-
             if "marketing director" in roles:
-                faculties = Faculties.objects.all()
-                is_director = True
+                permissions.update({
+                    'faculties': Faculties.objects.all(),
+                    'is_director': True
+                })
             elif "admin" in roles:
-                faculties = Faculties.objects.all()
-                is_admin = True
+                permissions.update({
+                    'faculties': Faculties.objects.all(),
+                    'is_admin': True
+                })
             elif "marketing cordinator" in roles:
-                faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
-                is_cordinator = True
+                permissions['faculties'] = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
+                permissions['is_cordinator'] = True
             elif "guest" in roles:
-                faculties = Faculties.objects.all()
-                is_guest = True
+                permissions['faculties'] = Faculties.objects.all()
+                permissions['is_guest'] = True
             else:
-                is_student = True
-                show_faculties = False
+                permissions.update({
+                    'is_student': True,
+                    'show_faculties': False
+                })
 
         except UserProfile.DoesNotExist:
-            can_upload = True
-            show_faculties = False
-    else:   
-        show_faculties = False
-        
+            permissions.update({
+                'can_upload': True,
+                'show_faculties': False
+            })
+    else:
+        permissions['show_faculties'] = False
+
+    return permissions
+
+def home(request):
+    permissions = get_user_roles_and_permissions(request.user)
+    public_contributions = Contributions.objects.filter(public=True)
+
     context = {
-        'faculties': faculties,
-        'can_upload': can_upload,
-        'is_admin': is_admin,
-        'is_cordinator': is_cordinator,
-        'is_director': is_director,
-        'is_student': is_student,
-        'is_guest': is_guest,
-        'show_faculties': show_faculties,
+        'faculties': permissions['faculties'],
+        'can_upload': permissions['can_upload'],
+        'is_admin': permissions['is_admin'],
+        'is_cordinator': permissions['is_cordinator'],
+        'is_director': permissions['is_director'],
+        'is_student': permissions['is_student'],
+        'is_guest': permissions['is_guest'],
+        'show_faculties': permissions['show_faculties'],
         'public_contributions': public_contributions,
     }
     return render(request, 'home.html', context)
+
 
 
 def file_upload_view(request):
@@ -336,6 +347,10 @@ def faculty_files(request, faculty_id):
     faculty = user_profile.faculty
     faculties = Faculties.objects.none() 
     contributions = Contributions.objects.filter(faculty_id=faculty_id)
+    # Assuming 'contributions' already contains the contributions for a given faculty
+    for contribution in contributions:
+        contribution.comments = Comment.objects.filter(contribution=contribution)
+
 
     if request.user.is_authenticated:
         # academic_year = faculty.academicYear if faculty else None
@@ -388,10 +403,8 @@ def show_contributions(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
 
     if request.user.is_authenticated:
-        # academic_year = faculty.academicYear if faculty else None
         roles = [role.name for role in user_profile.roles.all()]
 
-        # if academic_year and timezone.now() < academic_year.closure:
         if "marketing director" in roles:
             is_director = True
             faculties = Faculties.objects.all() 
@@ -434,10 +447,8 @@ def update_profile(request):
     is_student = False
 
     if request.user.is_authenticated:
-        # academic_year = faculty.academicYear if faculty else None
         roles = [role.name for role in user_profile.roles.all()]
 
-        # if academic_year and timezone.now() < academic_year.closure:
         if "marketing director" in roles:
             faculties = Faculties.objects.all()
             is_director = True
@@ -474,10 +485,8 @@ def contributions_detail(request, contribution_id):
     is_student = False 
     
     if request.user.is_authenticated:
-        # academic_year = faculty.academicYear if faculty else None
         roles = [role.name for role in user_profile.roles.all()]
 
-        # if academic_year and timezone.now() < academic_year.closure:
         if "marketing cordinator" in roles:
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
             is_cordinator = True
@@ -711,27 +720,28 @@ def delete_role(request, role_id):
 
 
 def all_contributions_view(request):
-    contributions = Contributions.objects.all()  # Fetch all contributions from the database
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    contributions = Contributions.objects.all() 
+    is_cordinator = False
+    is_director = False
+    
+    if request.user.is_authenticated:
+        roles = [role.name for role in user_profile.roles.all()]
+
+        if "marketing director" in roles:
+            is_director = True
+        else:
+            is_cordinator = True
+
     context = {
-        'contributions': contributions
+        'contributions': contributions,
+        'is_director': is_director,
+        'is_cordinator': is_cordinator,
     }
     return render(request, 'manage_contributions.html', context)
 
 
-def public_contribution(request, contribution_id):
-    contribution = get_object_or_404(Contributions, id=contribution_id)
-    public = request.GET.get('public')
-    
-    
-    if request.method == "GET":
-        if public == "pub":  # Được thay đổi từ "Approve" thành "app" cho phù hợp với tham số URL
-            contribution.public = True
-        elif public == "non":  # Được thay đổi từ "Disapprove" thành "dis" cho phù hợp
-            contribution.public = False
-        contribution.save()
-        return redirect('manage_contributions')
-    else:
-        return redirect('home')  # Redirect if the method is not POST
+
     
 #account:
 def account_list(request):
@@ -798,9 +808,30 @@ def statistical_analysis(request):
 
 def approve_contribution(request, contribution_id):
     contribution = get_object_or_404(Contributions, id=contribution_id)
-    contribution.status ='approved'
+    approve = request.GET.get('approve')
+
+    if request.method == "GET":
+        if approve == "app": 
+            contribution.status ='approved'
+        elif approve == "dis": 
+            contribution.status ='waiting'
     contribution.save()
     return redirect('manage_contributions')
+
+def public_contribution(request, contribution_id):
+    contribution = get_object_or_404(Contributions, id=contribution_id)
+    public = request.GET.get('public')
+    
+    
+    if request.method == "GET":
+        if public == "pub":  
+            contribution.public = True
+        elif public == "non":  
+            contribution.public = False
+        contribution.save()
+        return redirect('manage_contributions')
+    else:
+        return redirect('home')  
 
 @csrf_protect
 def reject_contribution(request, contribution_id):
@@ -808,6 +839,17 @@ def reject_contribution(request, contribution_id):
         contribution = get_object_or_404(Contributions, id=contribution_id)
         reject_reason = request.POST.get("reject_reason")
         contribution.reject_reason = reject_reason
+
+        user_profiles = contribution.user.all()
+        recipient_list = [user.email for user in user_profiles if user.email]
+        if recipient_list:
+            send_mail(
+                subject='Contribution Rejected',
+                message=f'Your contribution "{contribution.title}" has been rejected for the following reason: {reject_reason}',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=recipient_list,
+            )
+
         contribution.status = 'rejected'
         contribution.save()
         return redirect('manage_contributions')

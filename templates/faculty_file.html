@@ -159,19 +159,17 @@
               {% if not is_guest and not is_director %}
               <div class="feedback-box">
                 <h5 style="margin-bottom: 5px;">Contribution feedbacks:</h5>
-                {% for file in contribution.files.all %}
-                  {% if contribution.comments.count == 0 %}
+                {% if contribution.comments.count == 0 %}
+                  <p><strong>No one has commented yet...</strong></p>
+                {% else %}
+                  {% for comment in contribution.comments %}
                     <p>
-                      <strong>No one has comment yet...</strong>
+                      <strong>{{ comment.user.fullname }}: </strong>{{ comment.comment }}
+                      <br>
+                      <small>Posted on {{ comment.createAt|date:"Y-m-d H:i:s" }}</small>
                     </p>
-                  {% else %}
-                    {% for comment in comments %}
-                    <p>
-                      <strong>{{ comment.user.fullname }}: </strong>{{comment.comment }}
-                    </p>
-                    {% endfor %}
-                  {% endif %}
-                {% endfor %}
+                  {% endfor %}
+                {% endif %}
               </div>
               <div class="feedback-box">
                 <form action="" method="POST">
