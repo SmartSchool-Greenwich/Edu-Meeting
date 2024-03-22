@@ -16,6 +16,7 @@ from django.db.models import Count
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Q
+import re
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -42,7 +43,6 @@ def login_view(request):
 
 def register_view(request):
     faculties = Faculties.objects.all()
-    roles = Role.objects.filter(Q(name="student") | Q(name="guest"))
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -51,12 +51,18 @@ def register_view(request):
         phone = request.POST.get('phone')
         password = request.POST.get('password')
         repassword = request.POST.get('repassword')
-        role = request.POST.get('role', None)
-
         faculty_id = request.POST.get('faculty', None)
 
         if all([username, fullname, phone, password, repassword]):
+            password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
             if password == repassword:
+                if not re.match(password_pattern, password):
+                    # Add your logic here to inform the user about the password policy violation
+                    # For example, you might want to pass a message to your template
+                    return render(request, 'register.html', {
+                        'faculties': faculties,
+                        'error_message': 'Password must include at least one lowercase letter, one uppercase letter, one special character, and one number.'
+                    })
                 if User.objects.filter(username=username).exists():
                     return redirect('register')
                 else:
@@ -64,12 +70,11 @@ def register_view(request):
                     faculty = Faculties.objects.get(id=faculty_id) if faculty_id else None
                     
                     userprofile = UserProfile.objects.create(user=user, fullname=fullname, email=email, phone=phone, faculty=faculty)
-                    userprofile.roles.set(role)
                     return redirect('login')
             else:
                 return redirect('register')
         
-    return render(request, 'register.html', {'faculties': faculties,'roles':roles})
+    return render(request, 'register.html', {'faculties': faculties})
 
 
 def logout_view(request):
