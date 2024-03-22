@@ -211,21 +211,6 @@
                 <div class="selectbox" style="margin-bottom: 20px">
                   <div class="row">
                     <div class="col-4" style="margin: auto">
-                      <label for="id_faculty">Role: </label>
-                    </div>
-                    <div class="col-7">
-                      <select name="role" id="id_role" class="custom-select">
-                      <option value="" >Select ...</option>
-                          {% for role in roles %}
-                      <option value="{{ role.id }}" >{{ role }} </option>
-                          {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <div class="selectbox" style="margin-bottom: 20px">
-                  <div class="row">
-                    <div class="col-4" style="margin: auto">
                       <label for="id_faculty">Faculty: </label>
                     </div>
                     <div class="col-7">

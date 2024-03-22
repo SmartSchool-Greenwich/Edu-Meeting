@@ -33,6 +33,14 @@
       margin-top: 5px;
       margin-bottom: 15px;
     }
+    .backup-button {
+      text-align: center;
+      margin-top: 20px;
+  }
+  
+  .backup-button a {
+      display: inline-block;
+  }
     </style>
 
     <section class="apply-now" id="apply">
@@ -87,8 +95,10 @@
             <h5>10. Contact Us</h5>
             <p>If you have any questions or concerns about these terms and policies, please contact us at Edu Meeting Co.</p>
         </div>
+        <div class="backup-button text-center">
+          <a href="{% url 'file_upload' %}" class="btn btn-primary btn-sm">Backup to Upload Page</a>
+      </div>
     </section>
-
 {% endblock content %}
 
 
