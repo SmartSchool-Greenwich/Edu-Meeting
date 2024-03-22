@@ -153,16 +153,10 @@ def file_upload_view(request):
         user_profile = None
         faculties = None
         try:
-            is_student = True
             user_profile = request.user.userprofile
-            if user_profile.academic_Year and user_profile.academic_Year.closure > timezone.now():
-                # User has a valid AcademicYear, so you can continue to the upload logic.
-                user_faculty = user_profile.faculty
-                if user_faculty:
-                    faculties = Faculties.objects.filter(id=user_faculty.id)
-            else:
-                # Redirect to the page for entering AcademicYear code if AcademicYear is not valid
-                return redirect('enter_academic_year_code_url')
+            is_student = True
+            faculties = Faculties.objects.filter(id=user_profile.faculty.id)
+            valid_academic_years = AcademicYear.objects.filter(closure__lt=timezone.now())
         except UserProfile.DoesNotExist:
             # Handle the case where the user does not have a profile, according to your application's requirements
             pass
@@ -171,6 +165,8 @@ def file_upload_view(request):
         title = request.POST.get('title')
         content = request.POST.get('content')
         faculty_id = request.POST.get('faculty')
+        academicYear = request.POST.get('academic')
+
         term = request.POST.get('term') == 'on'
 
         # Check if any file upload is PDF, if so, redirect to home
@@ -181,38 +177,29 @@ def file_upload_view(request):
 
         try:
             faculty = Faculties.objects.get(id=faculty_id)
-            # Retrieve the current AcademicYear from the user's profile
-            current_academic_year = None
-            if request.user.userprofile.academic_Year:
-                current_academic_year = request.user.userprofile.academic_Year
+            academic_year = AcademicYear.objects.get(id=academicYear)
 
-            # Create the contribution with the current AcademicYear
+            # Create the contribution with the selected AcademicYear
             contribution = Contributions.objects.create(
                 title=title,
                 content=content,
                 faculty=faculty,
                 term=term,
-                academic_Year=current_academic_year  # Assign the AcademicYear here
+                academic_Year=academic_year
             )
             contribution.user.add(request.user.userprofile)
 
-            # Initialize the ContributionFiles instance outside the loop
-            contribution_file = ContributionFiles(contribution=contribution)
             # Handle file uploads
-            files_uploaded = False  # Flag to check if any valid file was uploaded
+            contribution_file = ContributionFiles(contribution=contribution)
             for file in request.FILES.getlist('word') + request.FILES.getlist('img'):
                 if file.name.endswith('.doc') or file.name.endswith('.docx'):
-                    # Assuming 'word' field should only have one file
                     if not contribution_file.word:
                         contribution_file.word = file
-                        files_uploaded = True
-                # Exclude PDF files from being uploaded to 'img' field
                 elif not file.name.endswith('.pdf') and not contribution_file.img:
                     contribution_file.img = file
-                    files_uploaded = True
 
-            if files_uploaded:
-                contribution_file.save()
+            # Save ContributionFiles instance
+            contribution_file.save()
 
             #sendmail
             marketing_coordinator_role = Role.get_marketing_coordinator_role()
@@ -225,8 +212,7 @@ def file_upload_view(request):
                 recipient_list = [coordinator.email for coordinator in coordinator_profiles if coordinator.email]
                 if recipient_list:
                     send_mail(
-                        subject='New Contribution Submitted',
-                        message=f'A new contribution "{title}" has been submitted to {faculty.name} by {request.user.userprofile.fullname}.',
+                        subject='New Contribution Submitted', message=f'A new contribution "{title}" has been submitted to {faculty.name} by {request.user.userprofile.fullname}.',
                         from_email=settings.EMAIL_HOST_USER,
                         recipient_list=recipient_list,
                     )
@@ -241,7 +227,8 @@ def file_upload_view(request):
     
     else:
         context = {'faculties': faculties,
-                   'is_student': is_student}
+                   'is_student': is_student,
+                   'valid_academic_years':valid_academic_years}
         
     return render(request, 'upload.html', context)
 

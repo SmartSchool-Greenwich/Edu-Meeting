@@ -103,6 +103,21 @@
 
             <label for="id_img">Image (optional):</label>
             <input type="file" name="img" id="id_img" accept="image/*" />
+            <div class="selectbox" style="margin-bottom: 20px">
+              <div class="row">
+                <div class="col-4" style="margin: auto">
+                  <label for="id_faculty">Academic </label>
+                </div>
+                <div class="col-7">
+                  <select name="academic" id="academic" class="custom-select">
+                    <option value="">Select ...</option>
+                    {% for faculty in valid_academic_years %}
+                    <option value="{{ faculty.id }}">{{ faculty.closure }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
 
             <label for="id_term" name="term"><input
               type="checkbox"
