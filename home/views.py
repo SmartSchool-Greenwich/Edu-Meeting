@@ -800,10 +800,10 @@ def account_delete(request, pk):
     
 def statistical_analysis(request):
     total_contributions = Contributions.objects.count()
-    approved_contributions = Contributions.objects.filter(status=True).count()
+    approved_contributions = Contributions.objects.filter(status="approved").count()
 
     contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
-    approved_by_faculty = Contributions.objects.filter(status=True).values('faculty__name').annotate(total=Count('id'))
+    approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
 
     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
     contributions_counts = [item['total'] for item in contributions_by_faculty]

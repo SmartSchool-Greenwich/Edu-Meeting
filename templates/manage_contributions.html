@@ -69,6 +69,7 @@
                                       <th scope="col">Student Name</th>
                                       <th scope="col">Article Title</th>
                                       <th scope="col">Submission Date</th>
+                                      <th scope="col">Faculty</th>
                                       <th scope="col">Status</th>
                                     {% if is_cordinator %}
                                       <th class="text-center" scope="col">Action</th>
@@ -89,6 +90,7 @@
                                         </td>
                                         <td>{{ contribution.title }}</td>
                                         <td>{{ contribution.createAt }}</td>
+                                        <td>{{ contribution.faculty }}</td>
                                         <td>
                                             {% if contribution.status == 'approved' %}
                                                 Approved
