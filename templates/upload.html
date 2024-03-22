@@ -90,8 +90,16 @@
               <input type="hidden" name="faculty" value="{{ faculty.pk }}" />
             {% endfor %}
 
-            <label for="id_word">Word Document (optional):</label>
+            <label for="id_word">
+              Word Document (optional):
+              {% if messages %}
+                {% for message in messages %}
+                <p class="{{ message.tags }}" style="color: red; font-size: 16px">{{ message }}</p>
+                {% endfor %}
+              {% endif %}
+            </label>
             <input type="file" name="word" id="id_word" accept=".doc, .docx" />
+            
 
             <label for="id_img">Image (optional):</label>
             <input type="file" name="img" id="id_img" accept="image/*" />

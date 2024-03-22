@@ -172,15 +172,21 @@ def file_upload_view(request):
         content = request.POST.get('content')
         faculty_id = request.POST.get('faculty')
         term = request.POST.get('term') == 'on'
-    
+
+        # Check if any file upload is PDF, if so, redirect to home
+        for file in request.FILES.getlist('word') + request.FILES.getlist('img'):
+            if file.name.endswith('.pdf'):
+                messages.error(request, 'You can only upload document files end with .doc or .docx')
+                return redirect('file_upload')  # Redirect to home if PDF file is uploaded
+
         try:
             faculty = Faculties.objects.get(id=faculty_id)
-        # Retrieve the current AcademicYear from the user's profile
+            # Retrieve the current AcademicYear from the user's profile
             current_academic_year = None
             if request.user.userprofile.academic_Year:
                 current_academic_year = request.user.userprofile.academic_Year
 
-        # Create the contribution with the current AcademicYear
+            # Create the contribution with the current AcademicYear
             contribution = Contributions.objects.create(
                 title=title,
                 content=content,
@@ -189,25 +195,25 @@ def file_upload_view(request):
                 academic_Year=current_academic_year  # Assign the AcademicYear here
             )
             contribution.user.add(request.user.userprofile)
-        
-        # Initialize the ContributionFiles instance outside the loop
+
+            # Initialize the ContributionFiles instance outside the loop
             contribution_file = ContributionFiles(contribution=contribution)
-        # Handle file uploads
+            # Handle file uploads
             files_uploaded = False  # Flag to check if any valid file was uploaded
             for file in request.FILES.getlist('word') + request.FILES.getlist('img'):
                 if file.name.endswith('.doc') or file.name.endswith('.docx'):
-                # Assuming 'word' field should only have one file
+                    # Assuming 'word' field should only have one file
                     if not contribution_file.word:
                         contribution_file.word = file
                         files_uploaded = True
-            # Exclude PDF files from being uploaded to 'img' field
+                # Exclude PDF files from being uploaded to 'img' field
                 elif not file.name.endswith('.pdf') and not contribution_file.img:
                     contribution_file.img = file
                     files_uploaded = True
-        
+
             if files_uploaded:
                 contribution_file.save()
-            
+
             #sendmail
             marketing_coordinator_role = Role.get_marketing_coordinator_role()
             if marketing_coordinator_role:
@@ -225,19 +231,20 @@ def file_upload_view(request):
                         recipient_list=recipient_list,
                     )
 
-
             return redirect('success_url') 
         except Faculties.DoesNotExist:
             return redirect('home')
         except Exception as e:
             print(e) 
             return redirect('home')
+
     
     else:
         context = {'faculties': faculties,
                    'is_student': is_student}
         
     return render(request, 'upload.html', context)
+
 
 
 def enter_academic_year_code(request):
