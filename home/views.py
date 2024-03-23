@@ -114,7 +114,7 @@ def get_user_roles_and_permissions(user):
                 permissions['faculties'] = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
                 permissions['is_cordinator'] = True
             elif "guest" in roles:
-                permissions['faculties'] = Faculties.objects.all()
+                permissions['faculties'] = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
                 permissions['is_guest'] = True
             else:
                 permissions.update({
@@ -161,7 +161,7 @@ def file_upload_view(request):
             user_profile = request.user.userprofile
             is_student = True
             faculties = Faculties.objects.filter(id=user_profile.faculty.id)
-            valid_academic_years = AcademicYear.objects.filter(closure__lt=timezone.now())
+            valid_academic_years = AcademicYear.objects.filter(closure__gt=timezone.now())
         except UserProfile.DoesNotExist:
             # Handle the case where the user does not have a profile, according to your application's requirements
             pass
@@ -488,6 +488,7 @@ def contributions_detail(request, contribution_id):
     faculty = user_profile.faculty
     is_cordinator = False
     is_student = False 
+    is_director = False 
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
@@ -495,6 +496,9 @@ def contributions_detail(request, contribution_id):
         if "marketing cordinator" in roles:
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
             is_cordinator = True
+        elif "marketing director" in roles:
+            faculties = Faculties.objects.all()
+            is_director = True
         else:
             is_student = True
             show_faculties = False
@@ -538,6 +542,7 @@ def contributions_detail(request, contribution_id):
         'show_faculties': show_faculties,
         'is_cordinator': is_cordinator,
         'is_student': is_student,
+        'is_director': is_director,
         'faculties': faculties,
     })    
 
@@ -729,6 +734,7 @@ def all_contributions_view(request):
     contributions = Contributions.objects.all()
     is_cordinator = False
     is_director = False
+    faculty = user_profile.faculty
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
@@ -737,13 +743,13 @@ def all_contributions_view(request):
             is_director = True
         else:
             is_cordinator = True
+            contributions = Contributions.objects.filter(faculty=faculty)
 
-    # Xử lý dữ liệu tìm kiếm từ form
     query = request.GET.get('q')
     if query:
         contributions = contributions.filter(
-            Q(user__fullname__icontains=query) |  # Tìm kiếm theo username của người upload
-            Q(title__icontains=query)  # Tìm kiếm theo tên contribution
+            Q(user__fullname__icontains=query) |
+            Q(title__icontains=query)  
         )
 
     context = {
@@ -798,6 +804,24 @@ def account_delete(request, pk):
         return redirect('account_list')
     
 def statistical_analysis(request):
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    is_cordinator = False
+    is_director = False
+    is_guest = False
+    is_admin = False
+    
+    if request.user.is_authenticated:
+        roles = [role.name for role in user_profile.roles.all()]
+
+        if "marketing director" in roles:
+            is_director = True
+        elif "marketing cordinator" in roles:
+            is_cordinator = True
+        elif "guest" in roles:
+            is_guest = True
+        elif "admin" in roles:
+            is_admin = True
+
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
 
@@ -807,13 +831,16 @@ def statistical_analysis(request):
     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
     contributions_counts = [item['total'] for item in contributions_by_faculty]
     approved_counts = [item['total'] for item in approved_by_faculty]
-
     context = {
         'total_contributions': total_contributions,
         'approved_contributions': approved_contributions,
         'faculty_names': faculty_names,
         'contributions_by_faculty': contributions_counts,
         'approved_by_faculty': approved_counts,
+        'is_director': is_director,
+        'is_cordinator': is_cordinator,
+        'is_guest': is_guest,
+        'is_admin': is_admin,
     }
     return render(request, 'statistical_analysis.html', context)
 

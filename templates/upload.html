@@ -66,6 +66,39 @@
         background-color: #cccccc;
         cursor: not-allowed;
       }
+      .selectbox {
+  margin-bottom: 20px;
+}
+
+.selectbox .row {
+  display: flex;
+  align-items: center;
+}
+
+.selectbox .col-4 {
+  flex: 0 0 33.33333%;
+  max-width: 33.33333%;
+}
+
+.selectbox .col-7 {
+  flex: 0 0 58.33333%;
+  max-width: 58.33333%;
+}
+
+.selectbox label {
+  margin: 0;
+  color: #333;
+}
+
+.selectbox select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: inline-block;
+}
     </style>
 
     <section class="apply-now" id="apply">
@@ -103,16 +136,15 @@
 
             <label for="id_img">Image (optional):</label>
             <input type="file" name="img" id="id_img" accept="image/*" />
-            <div class="selectbox" style="margin-bottom: 20px">
+
+            <div class="selectbox" style="margin: 20px 0">
               <div class="row">
-                <div class="col-4" style="margin: auto">
-                  <label for="id_faculty">Academic </label>
-                </div>
-                <div class="col-7">
+
+                <div class="col-12">
                   <select name="academic" id="academic" class="custom-select">
-                    <option value="">Select ...</option>
+                    <option value="">Select Academic Year ...</option>
                     {% for faculty in valid_academic_years %}
-                    <option value="{{ faculty.id }}">{{ faculty.closure }}</option>
+                    <option value="{{ faculty.id }}">Years: {{ faculty.closure|date:'Y' }} - {{ faculty.finalClosure|date:'Y' }} | Closure date: {{ faculty.closure }}</option>
                     {% endfor %}
                   </select>
                 </div>

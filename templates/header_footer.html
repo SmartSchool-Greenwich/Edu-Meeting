@@ -54,10 +54,15 @@ https://templatemo.com/tm-569-edu-meeting
               {% endif %}
               {% if is_cordinator or is_director %}
               <li>
-                  <a href="{% url "manage_contributions" %}">Contribution Management</a>
+                  <a href="{% url "statistical_analysis" %}">Dashboard</a>
+              </li>
+              {% elif is_guest %}
+              <li>
+                <a href="{% url "statistical_analysis" %}">Statiscal Analysis</a>
               </li>
               {% endif %}
               {% if user.is_authenticated %}
+              {% if not is_director and not is_cordinator %}
               <li class="has-sub">
                 <a href="javascript:void(0)">Contributions</a>
                 <ul class="sub-menu">
@@ -68,11 +73,6 @@ https://templatemo.com/tm-569-edu-meeting
                         </li>
                         {% endfor %}
                     {% endif %}
-                    {% if is_director %}
-                    <li>
-                        <a href="{% url 'show_contributions' %}">Download Zip Files</a>
-                    </li>
-                    {% endif %}
                     {% if is_student %}
                     <li>
                       <a href="{% url 'my_contributions' %}">View My Contributions</a>
@@ -80,6 +80,7 @@ https://templatemo.com/tm-569-edu-meeting
                     {% endif %}
                 </ul>
               </li>  
+              {% endif %}
               {% endif %}          
               {% if can_upload and is_student and not is_cordinator and not is_director and not is_admin %}
               <li>

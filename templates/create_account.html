@@ -177,8 +177,8 @@
                                         {% endfor %}
                                     </select>
                         
-                                    <label for="id_faculty" style="display: none;">Faculty:</label>
-                                    <select name="faculty" id="id_faculty" style="display: none;">
+                                    <label for="id_faculty">Faculty:</label>
+                                    <select name="faculty" id="id_faculty" >
                                         {% for faculty in faculties %}
                                             <option value="{{ faculty.pk }}">{{ faculty.name }}</option>
                                         {% endfor %}

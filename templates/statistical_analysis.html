@@ -68,6 +68,7 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                 Statiscal Analysis
                             </a>
+                            {% if is_admin %}
                             <div class="sb-sidenav-menu-heading">Managements</div>
                             <a class="nav-link" href="{% url "role_list" %}">
                                 <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
@@ -86,6 +87,14 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                                 Faculties
                             </a>
+                            {% elif is_cordinator or is_director %}
+                            <div class="sb-sidenav-menu-heading">Contributions Management</div>
+                            <a class="nav-link" href="{% url "manage_contributions" %}">
+                              <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                              Contributions Approval
+                            </a>
+                            {% elif is_guest %}
+                            {% endif %}
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">
@@ -100,24 +109,30 @@
                         <h1 class="mt-4">Statistical Analysis</h1>
                         <div class="card mb-4">
                             <div class="card-body">
-                              <div class="chart-container">
-                                <h3>Total and Approved Contributions</h3>
-                                <canvas id="contributionsPieChart"></canvas>
-                              </div>
-                          
-                              <div class="chart-container">
-                                <h3>Contributions by Faculty</h3>
-                                <canvas id="contributionsByFacultyPieChart"></canvas>
-                              </div>
-                          
-                              <div class="chart-container">
-                                <h3>Approved Contributions by Faculty</h3>
-                                <canvas id="approvedByFacultyPieChart"></canvas>
-                              </div>
+                                {% if is_cordinator or is_admin %}
+                                <div class="chart-container">
+                                    <h3>Total and Approved Contributions</h3>
+                                    <canvas id="contributionsPieChart"></canvas>
+                                </div>
+                                {% endif %}
+                                
+                                {% if is_director or is_admin %}
+                                <div class="chart-container">
+                                    <h3>Approved Contributions by Faculty</h3>
+                                    <canvas id="approvedByFacultyPieChart"></canvas>
+                                </div>
+                                {% endif %}
+                                
+                                {% if is_guest or is_admin %}
+                                <div class="chart-container">
+                                    <h3>Contributions by Faculty</h3>
+                                    <canvas id="contributionsByFacultyPieChart"></canvas>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-                </main>
+                </main>                
                 <footer class="py-4 bg-light mt-auto">
                     <div class="container-fluid px-4">
                         <div class="d-flex align-items-center justify-content-between small">
@@ -137,47 +152,36 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script>
-          document.addEventListener('DOMContentLoaded', function() {
-              const facultyNames = {{ faculty_names|safe }};
-              const contributionsByFaculty = {{ contributions_by_faculty|safe }};
-              const approvedByFaculty = {{ approved_by_faculty|safe }};
-    
-              // Total and Approved Contributions Pie Chart
-              new Chart(document.getElementById('contributionsPieChart'), {
-                  type: 'pie',
-                  data: {
-                      labels: ['Total Contributions', 'Approved Contributions'],
-                      datasets: [{
-                          data: [{{ total_contributions }}, {{ approved_contributions }}],
-                          backgroundColor: ['#4e73df', '#1cc88a'],
-                      }]
-                  }
-              });
-    
-              // Contributions by Faculty Pie Chart
-              new Chart(document.getElementById('contributionsByFacultyPieChart'), {
-                  type: 'pie',
-                  data: {
-                      labels: facultyNames,
-                      datasets: [{
-                          data: contributionsByFaculty,
-                          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
-                      }]
-                  }
-              });
-    
-              // Approved Contributions by Faculty Pie Chart
-              new Chart(document.getElementById('approvedByFacultyPieChart'), {
-                  type: 'pie',
-                  data: {
-                      labels: facultyNames,
-                      datasets: [{
-                          data: approvedByFaculty,
-                          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
-                      }]
-                  }
-              });
-          });
+            document.addEventListener('DOMContentLoaded', function() {
+                // Kiểm tra xem biểu đồ Total and Approved Contributions có được hiển thị không
+                if (document.getElementById('contributionsPieChart')) {
+                    createPieChart('contributionsPieChart', ['Total Contributions', 'Approved Contributions'], [{{ total_contributions }}, {{ approved_contributions }}], ['#4e73df', '#1cc88a']);
+                }
+                
+                // Kiểm tra xem biểu đồ Contributions by Faculty có được hiển thị không
+                if (document.getElementById('contributionsByFacultyPieChart')) {
+                    createPieChart('contributionsByFacultyPieChart', {{ faculty_names|safe }}, {{ contributions_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
+                }
+                
+                // Kiểm tra xem biểu đồ Approved Contributions by Faculty có được hiển thị không
+                if (document.getElementById('approvedByFacultyPieChart')) {
+                    createPieChart('approvedByFacultyPieChart', {{ faculty_names|safe }}, {{ approved_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
+                }
+            });
+            
+            // Hàm để tạo biểu đồ Pie Chart
+            function createPieChart(chartId, labels, data, backgroundColors) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: backgroundColors,
+                        }]
+                    }
+                });
+            }
         </script>
     </body>
 </html>

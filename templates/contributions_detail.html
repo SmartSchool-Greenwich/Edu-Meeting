@@ -119,31 +119,34 @@
             <div class="container">
               <div class="file-crud-container">
                 <h2>{{ contribution.title }}</h2>
-                <h5>Content: {{ contribution.content }}</h5>
-                <p>
-                </p>
+                <p style="text-align: center;">Closure Date: {{ contribution.academic_Year.closure }} | Final Closure Date: {{ contribution.academic_Year.finalClosure }}</p>
+                <hr>
+                <h5><strong>Content:</strong> {{ contribution.content }}</h5>
                 <form class="file-upload-form" enctype="multipart/form-data">
                   {% for file in contribution.files.all %}
                   <div class="form-group">
                     {% if file.word %}
                     <div class="content">
-                      <h5 class="truncated">Document: <a href="{{ file.word.url }}">{{ file.word.name }}</a></h5>
+                      <h5 class="truncated"><strong>Document:</strong> <a href="{{ file.word.url }}">{{ file.word.name }}</a></h5>
                     </div>
                     {% else %}
-                    <h5>Document: Do not have document files</h5>
-                    {% endif %} {% if file.img %}
+                    <h5><strong>Document:</strong> Do not have document files</h5>
+                    {% endif %} 
+                    {% if file.img %}
                     <div class="content">
-                      <h5 class="truncated">Image: <a href="{{ file.img.url }}">{{ file.img.name }}</a></h5>
+                      <h5 class="truncated"><strong>Image:</strong> <a href="{{ file.img.url }}">{{ file.img.name }}</a></h5>
                     </div>
                     {% else %}
-                    <h5>Image: Do not have image files</h5>
+                    <h5><strong>Image:</strong> Do not have image files</h5>
                     {% endif %}
                   </div>
                   {% endfor %}
                   {% if can_update %}
+                    {% if not is_cordinator and not is_director %}
                     <a href="{% url 'update_contribution' pk=contribution.id %}" type="submit" class="btn btn-primary" >
                       Update contribution
                     </a>  
+                    {% endif %}
                   {% endif %}
                 </form>
               </div>
@@ -171,6 +174,7 @@
                   {% endif %}
                 </div>
               </div>
+              {% if not is_director %}
               <div class="feedback-box">
                 <form action="" method="POST">
                   {% csrf_token %}
@@ -181,6 +185,7 @@
                   </div>
                 </form>
               </div>
+              {% endif %}
             </div>
           </div>
         </div>

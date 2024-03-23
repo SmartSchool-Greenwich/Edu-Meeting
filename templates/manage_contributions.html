@@ -43,6 +43,11 @@
                 <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                     <div class="sb-sidenav-menu">
                         <div class="nav">
+                            <div class="sb-sidenav-menu-heading">Statiscals</div>
+                            <a class="nav-link" href="{% url "statistical_analysis" %}">
+                                <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                Statiscal Analysis
+                            </a>
                             <div class="sb-sidenav-menu-heading">Contributions Management</div>
                             <a class="nav-link" href="{% url "manage_contributions" %}">
                               <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
@@ -62,7 +67,7 @@
                         <h1 class="mt-4">List of Contributions</h1>
                         <div class="card mb-4">
                             <div class="card-body">
-                              <form method="post" enctype="">
+                              <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
                                 <table class="table mt-3">
                                   <thead class="thead-dark">
                                     <tr>
@@ -76,10 +81,13 @@
                                     {% endif %}
                                     {% if is_director %}
                                       <th class="text-center" scope="col">Public Status</th>
+                                      <th scope="col">Actions</th>
+                                      <th scope="col">Download</th>
                                     {% endif %}
                                     </tr>
                                   </thead>
                                   <tbody>
+                                    {% csrf_token %}
                                     {% for contribution in contributions %}
                                     <tr>
                                         <td>
@@ -126,12 +134,23 @@
                                             {% endif %}
                                           </div>
                                         </td>  
-                                        {% endif %}            
+                                        {% endif %}  
+                                        {% if is_director %}
+                                        <td>
+                                            <a href="{% url 'contributions_detail' contribution.id %}" class="btn btn-warning btn-sm">View Detail</a>
+                                        </td> 
+                                        <td style="padding: 20px 40px;">
+                                            <input type="checkbox" name="contribution_ids" value="{{ contribution.id }}">
+                                        </td>  
+                                        {% endif %}        
                                     </tr>
                                     {% endfor %}
                                   </tbody>
                                 </table>
-                              </form>
+                                {% if is_director %}
+                                <button type="submit" class="btn btn-primary" style="float: right">Download Selected Files</button>
+                                {% endif %} 
+                            </form>
                             </div>
                         </div>
                     </div>
