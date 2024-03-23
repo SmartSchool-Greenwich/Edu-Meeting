@@ -52,7 +52,7 @@ https://templatemo.com/tm-569-edu-meeting
                   <a href="{% url "statistical_analysis" %}">Administrator</a>
               </li>
               {% endif %}
-              {% if is_cordinator or is_director %}
+              {% if is_coordinator or is_manager %}
               <li>
                   <a href="{% url "statistical_analysis" %}">Dashboard</a>
               </li>
@@ -62,7 +62,7 @@ https://templatemo.com/tm-569-edu-meeting
               </li>
               {% endif %}
               {% if user.is_authenticated %}
-              {% if not is_director and not is_cordinator %}
+              {% if not is_manager and not is_coordinator %}
               <li class="has-sub">
                 <a href="javascript:void(0)">Contributions</a>
                 <ul class="sub-menu">
@@ -82,7 +82,7 @@ https://templatemo.com/tm-569-edu-meeting
               </li>  
               {% endif %}
               {% endif %}          
-              {% if can_upload and is_student and not is_cordinator and not is_director and not is_admin %}
+              {% if can_upload and is_student and not is_coordinator and not is_manager and not is_admin %}
               <li>
                 <a href="{% url 'file_upload'%}">Upload Contributions</a>
               </li>

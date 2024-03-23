@@ -67,13 +67,13 @@
       }
 
       .navigation-container {
-        background-color: #f4f4f4;
+        background-color: #fff;
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         margin: 10px;
         box-sizing: border-box;
-        padding: 20px;
+        padding: 30px;
         width: 100%;
       }
 
@@ -154,38 +154,40 @@
           </div>
           <!-- Navigation Container -->
           <div class="col-md-4 mx-auto">
-            <div class="navigation-container">
-              <div class="navigation-options">
-                <!-- Add your navigation options here -->
-                <h4 style="margin-bottom: 5px;">Contribution feedbacks:</h4>
-                <div class="feedback-box">
-                  {% if comments.count == 0 %}
-                    <p>
-                      <strong>No one has comment yet...</strong>
-                    </p>
-                  {% else %}
-                    {% for comment in comments %}
-                    <p>
-                      <strong>{{ comment.user.fullname }}: </strong>{{comment.comment }}
-                      <br>
-                      <small>Posted on {{ comment.createAt|date:"Y-m-d H:i:s" }}</small>
-                    </p>
-                    {% endfor %}
-                  {% endif %}
-                </div>
-              </div>
-              {% if not is_director %}
-              <div class="feedback-box">
-                <form action="" method="POST">
-                  {% csrf_token %}
-                  <div class="feedback-form">
-                    <input type="hidden" name="contribution_id" value="{{ contribution.id }}">
-                    <textarea name="comment" placeholder="Leave your comment..."></textarea>
-                    <button>Submit Feedback</button>
+            <div class="container">
+              <div class="navigation-container">
+                <div class="navigation-options">
+                  <!-- Add your navigation options here -->
+                  <h4 style="margin-bottom: 5px;">Contribution feedbacks:</h4>
+                  <div class="feedback-box">
+                    {% if comments.count == 0 %}
+                      <p>
+                        <strong>No one has comment yet...</strong>
+                      </p>
+                    {% else %}
+                      {% for comment in comments %}
+                      <p>
+                        <strong>{{ comment.user.fullname }}: </strong>{{comment.comment }}
+                        <br>
+                        <small>Posted on {{ comment.createAt|date:"Y-m-d H:i:s" }}</small>
+                      </p>
+                      {% endfor %}
+                    {% endif %}
                   </div>
-                </form>
+                </div>
+                {% if not is_director %}
+                <div class="feedback-box">
+                  <form action="" method="POST">
+                    {% csrf_token %}
+                    <div class="feedback-form">
+                      <input type="hidden" name="contribution_id" value="{{ contribution.id }}">
+                      <textarea name="comment" placeholder="Leave your comment..."></textarea>
+                      <button>Submit Feedback</button>
+                    </div>
+                  </form>
+                </div>
+                {% endif %}
               </div>
-              {% endif %}
             </div>
           </div>
         </div>

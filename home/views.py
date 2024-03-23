@@ -87,8 +87,8 @@ def get_user_roles_and_permissions(user):
     permissions = {
         'can_upload': True,
         'is_admin': False,
-        'is_cordinator': False,
-        'is_director': False,
+        'is_coordinator': False,
+        'is_manager': False,
         'is_student': False,
         'is_guest': False,
         'show_faculties': True,
@@ -101,19 +101,19 @@ def get_user_roles_and_permissions(user):
             faculty = user_profile.faculty
             roles = [role.name for role in user_profile.roles.all()]
 
-            if "marketing director" in roles:
+            if "marketing manager" in roles:
                 permissions.update({
                     'faculties': Faculties.objects.all(),
-                    'is_director': True
+                    'is_manager': True
                 })
             elif "admin" in roles:
                 permissions.update({
                     'faculties': Faculties.objects.all(),
                     'is_admin': True
                 })
-            elif "marketing cordinator" in roles:
+            elif "marketing coordinator" in roles:
                 permissions['faculties'] = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
-                permissions['is_cordinator'] = True
+                permissions['is_coordinator'] = True
             elif "guest" in roles:
                 permissions['faculties'] = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
                 permissions['is_guest'] = True
@@ -141,8 +141,8 @@ def home(request):
         'faculties': permissions['faculties'],
         'can_upload': permissions['can_upload'],
         'is_admin': permissions['is_admin'],
-        'is_cordinator': permissions['is_cordinator'],
-        'is_director': permissions['is_director'],
+        'is_coordinator': permissions['is_coordinator'],
+        'is_manager': permissions['is_manager'],
         'is_student': permissions['is_student'],
         'is_guest': permissions['is_guest'],
         'show_faculties': permissions['show_faculties'],
@@ -346,8 +346,8 @@ def create_account(request):
 
 def faculty_files(request, faculty_id):
     is_guest = False
-    is_director = False
-    is_cordinator = False
+    is_manager = False
+    is_coordinator = False
     user_profile = get_object_or_404(UserProfile, user=request.user)
     show_faculties = True 
     faculty = user_profile.faculty
@@ -363,11 +363,11 @@ def faculty_files(request, faculty_id):
         roles = [role.name for role in user_profile.roles.all()]
 
         # if academic_year and timezone.now() < academic_year.closure:
-        if "marketing director" in roles:
-            is_director = True
+        if "marketing manager" in roles:
+            is_manager = True
             faculties = Faculties.objects.all() 
-        elif "marketing cordinator" in roles:
-            is_cordinator = True
+        elif "marketing coordinator" in roles:
+            is_coordinator = True
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
         elif "guest" in roles:
             is_guest = True
@@ -399,26 +399,26 @@ def faculty_files(request, faculty_id):
                                                  'contributions': contributions,
                                                  'faculties': faculties,
                                                  'show_faculties': show_faculties,
-                                                 'is_director': is_director,
-                                                 'is_cordinator': is_cordinator})
+                                                 'is_manager': is_manager,
+                                                 'is_coordinator': is_coordinator})
                                                  
 
 def show_contributions(request):
-    is_director = False
+    is_manager = False
     show_faculties = True 
     user_profile = get_object_or_404(UserProfile, user=request.user)
 
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
 
-        if "marketing director" in roles:
-            is_director = True
+        if "marketing manager" in roles:
+            is_manager = True
             faculties = Faculties.objects.all() 
 
     contributions = Contributions.objects.filter(status="approved")
     
     return render(request, 'show_contribution.html', {'contributions': contributions,
-                                                      'is_director': is_director,
+                                                      'is_manager': is_manager,
                                                       'show_faculties': show_faculties,
                                                       'faculties' : faculties})
 
@@ -448,22 +448,21 @@ def update_profile(request):
     show_faculties = True 
     faculty = user_profile.faculty
     faculties = Faculties.objects.none() 
-    is_cordinator = False
-    is_director = False
+    is_coordinator = False
+    is_manager = False
     is_student = False
 
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
 
-        if "marketing director" in roles:
+        if "marketing manager" in roles:
             faculties = Faculties.objects.all()
-            is_director = True
-        elif "marketing cordinator" in roles:
+            is_manager = True
+        elif "marketing coordinator" in roles:
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
-            is_cordinator = True
+            is_coordinator = True
         else:
             is_student = True
-            show_faculties = False
 
     if request.method == 'POST':
         user_profile.fullname = request.POST.get('fullname', '')
@@ -475,8 +474,8 @@ def update_profile(request):
         return render(request, 'update_profile.html', {'user_profile': user_profile,
                                                        'faculties': faculties,
                                                        'show_faculties': show_faculties,
-                                                       'is_cordinator': is_cordinator,
-                                                       'is_director': is_director,
+                                                       'is_coordinator': is_coordinator,
+                                                       'is_manager': is_manager,
                                                        'is_student': is_student})
 
 def contributions_detail(request, contribution_id):
@@ -487,19 +486,19 @@ def contributions_detail(request, contribution_id):
     show_faculties = True 
     faculties = Faculties.objects.none() 
     faculty = user_profile.faculty
-    is_cordinator = False
+    is_coordinator = False
     is_student = False 
-    is_director = False 
+    is_manager = False 
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
 
-        if "marketing cordinator" in roles:
+        if "marketing coordinator" in roles:
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
-            is_cordinator = True
-        elif "marketing director" in roles:
+            is_coordinator = True
+        elif "marketing manager" in roles:
             faculties = Faculties.objects.all()
-            is_director = True
+            is_manager = True
         else:
             is_student = True
             show_faculties = False
@@ -541,9 +540,9 @@ def contributions_detail(request, contribution_id):
         'file_form': file_form,
         'can_update': can_update,
         'show_faculties': show_faculties,
-        'is_cordinator': is_cordinator,
+        'is_coordinator': is_coordinator,
         'is_student': is_student,
-        'is_director': is_director,
+        'is_manager': is_manager,
         'faculties': faculties,
     })    
 
@@ -595,8 +594,8 @@ def user_profile(request):
     show_faculties = True 
     faculty = user_profile.faculty
     faculties = Faculties.objects.none() 
-    is_cordinator = False
-    is_director = False
+    is_coordinator = False
+    is_manager = False
     is_student = False
 
     if request.user.is_authenticated:
@@ -604,12 +603,12 @@ def user_profile(request):
         roles = [role.name for role in user_profile.roles.all()]
 
         # if academic_year and timezone.now() < academic_year.closure:
-        if "marketing director" in roles:
+        if "marketing manager" in roles:
             faculties = Faculties.objects.all()
-            is_director = True
-        elif "marketing cordinator" in roles:
+            is_manager = True
+        elif "marketing coordinator" in roles:
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
-            is_cordinator = True
+            is_coordinator = True
         else:
             is_student = True
             show_faculties = False
@@ -617,8 +616,8 @@ def user_profile(request):
     return render(request, 'profile.html', {'user_profile': user_profile,
                                             'faculties': faculties,
                                             'show_faculties': show_faculties,
-                                            'is_cordinator': is_cordinator,
-                                            'is_director': is_director,
+                                            'is_coordinator': is_coordinator,
+                                            'is_manager': is_manager,
                                             'is_student': is_student})
 
 #academic
@@ -733,17 +732,17 @@ def delete_role(request, role_id):
 def all_contributions_view(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
     contributions = Contributions.objects.all()
-    is_cordinator = False
-    is_director = False
+    is_coordinator = False
+    is_manager = False
     faculty = user_profile.faculty
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
 
-        if "marketing director" in roles:
-            is_director = True
+        if "marketing manager" in roles:
+            is_manager = True
         else:
-            is_cordinator = True
+            is_coordinator = True
             contributions = Contributions.objects.filter(faculty=faculty)
 
     query = request.GET.get('q')
@@ -755,8 +754,8 @@ def all_contributions_view(request):
 
     context = {
         'contributions': contributions,
-        'is_director': is_director,
-        'is_cordinator': is_cordinator,
+        'is_manager': is_manager,
+        'is_coordinator': is_coordinator,
     }
     return render(request, 'manage_contributions.html', context)
 
@@ -806,18 +805,18 @@ def account_delete(request, pk):
     
 def statistical_analysis(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
-    is_cordinator = False
-    is_director = False
+    is_coordinator = False
+    is_manager = False
     is_guest = False
     is_admin = False
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
 
-        if "marketing director" in roles:
-            is_director = True
-        elif "marketing cordinator" in roles:
-            is_cordinator = True
+        if "marketing manager" in roles:
+            is_manager = True
+        elif "marketing coordinator" in roles:
+            is_coordinator = True
         elif "guest" in roles:
             is_guest = True
         elif "admin" in roles:
@@ -858,8 +857,8 @@ def statistical_analysis(request):
         'faculty_names': faculty_names,
         'contributions_by_faculty': contributions_counts,
         'approved_by_faculty': approved_counts,
-        'is_director': is_director,
-        'is_cordinator': is_cordinator,
+        'is_manager': is_manager,
+        'is_coordinator': is_coordinator,
         'is_guest': is_guest,
         'is_admin': is_admin,
     }

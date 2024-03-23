@@ -12,10 +12,8 @@
     }
 
     .form-box {
-      display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
       width: 90%;
       max-width: 650px;
       background: transparent;
@@ -25,15 +23,6 @@
       margin: 170px auto;
       padding: 30px;
       box-sizing: border-box;
-    }
-
-    .form-value-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-      weight: 100%;
-      margin: 0 10px;
     }
 
     .input-container{
@@ -135,6 +124,13 @@
       text-decoration: underline;
     }
 
+    .selectbox{
+      position: relative;
+      margin: 30px 0;
+      max-width: 310px;
+      min-width: 80px;
+    }
+
     .custom-select {
       appearance: none;
       -webkit-appearance: none;
@@ -142,7 +138,7 @@
       background-color: #fff;
       border: 1px solid #ccc;
       padding: 4px 6px;
-      width: 100%;
+      width: 160%;
       border-radius: 5px;
       font-size: 16px;
       box-sizing: border-box;
@@ -179,8 +175,8 @@
           <h2>Register</h2>
           <form class="form" method="POST" action="">
             {% csrf_token %}
-            <div class="input-container">
-              <div class="form-value-container col-lg-6">
+            <div class="row">
+              <div class="form-value-container col-6">
                 <div class="inputbox">
                     <ion-icon name="mail-outline"></ion-icon>
                     <input type="text" name="username" required>
@@ -197,7 +193,7 @@
                     <label for="">Confirm Password</label>
                 </div>
               </div>
-              <div class="form-value-container col-lg-6">
+              <div class="form-value-container col-6">
                 <div class="inputbox">
                   <ion-icon name="text-outline"></ion-icon>
                   <input type="text" name="fullname" required>
@@ -208,12 +204,14 @@
                     <input type="text" name="phone" required>
                     <label for="">Phone</label>
                 </div>
-                <div class="selectbox" style="margin-bottom: 20px">
-                  <div class="row">
-                    <div class="col-4" style="margin: auto">
+                <div class="selectbox">
+                  <div class="row" style="padding:0 35px 0 5px; width: 100%; height: 50px;">
+                    <div class="col-3" style="margin: auto">
                       <label for="id_faculty">Faculty: </label>
                     </div>
-                    <div class="col-7">
+                    <div class="col-3" style="margin: auto">
+                    </div>
+                    <div class="col-6" style="margin: auto">
                       <select name="faculty" id="id_faculty" class="custom-select">
                         <option value="">Select ...</option>
                         {% for faculty in faculties %}
