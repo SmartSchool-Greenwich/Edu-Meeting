@@ -129,6 +129,18 @@
                                     <canvas id="contributionsByFacultyPieChart"></canvas>
                                 </div>
                                 {% endif %}
+
+                                {% if is_admin %}
+                                <div class="chart-container">
+                                    <h3>Total contributions over time</h3>
+                                    <canvas id="contributionsOverTimeLineChart"></canvas>
+                                </div>
+
+                                <div class="chart-container">
+                                    <h3>Number of contributions per user</h3>
+                                    <canvas id="contributionsByUserColumnChart"></canvas>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -167,9 +179,16 @@
                 if (document.getElementById('approvedByFacultyPieChart')) {
                     createPieChart('approvedByFacultyPieChart', {{ faculty_names|safe }}, {{ approved_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
                 }
+
+                if (document.getElementById('contributionsOverTimeLineChart')) {
+                    createLineChart('contributionsOverTimeLineChart', {{ time_labels|safe }}, {{ contributions_over_time|safe }}, 'Total Contributions', '#4e73df');
+                }
+
+                if (document.getElementById('contributionsByUserColumnChart')) {
+                    createColumnChart('contributionsByUserColumnChart', {{ user_labels|safe }}, {{ contributions_by_user|safe }}, 'Contributions per User', '#1cc88a');
+                }
             });
             
-            // Hàm để tạo biểu đồ Pie Chart
             function createPieChart(chartId, labels, data, backgroundColors) {
                 new Chart(document.getElementById(chartId), {
                     type: 'pie',
@@ -179,6 +198,51 @@
                             data: data,
                             backgroundColor: backgroundColors,
                         }]
+                    }
+                });
+            }
+
+            function createLineChart(chartId, labels, data, label, borderColor) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'line', // Chọn loại biểu đồ là đường
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            fill: false, // Không điền màu dưới đường
+                            borderColor: borderColor,
+                            borderWidth: 2 // Độ rộng của đường
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createColumnChart(chartId, labels, data, label, backgroundColor) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'bar', // Chọn loại biểu đồ là cột
+                    data: {
+                        labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: backgroundColor,
+                    borderWidth: 1 // Độ rộng của đường viền cho cột
+                }]
+            },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
+                            }
+                        }
                     }
                 });
             }

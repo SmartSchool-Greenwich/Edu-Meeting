@@ -16,6 +16,7 @@ from django.db.models import Count
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Q
+from datetime import datetime, timedelta
 import re
 
 def login_view(request):
@@ -822,6 +823,22 @@ def statistical_analysis(request):
         elif "admin" in roles:
             is_admin = True
 
+     # Lấy dữ liệu số lượng đóng góp của mỗi người dùng
+    user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
+
+    # Chuẩn bị dữ liệu cho biểu đồ
+    user_labels = [item['fullname'] for item in user_contributions]
+    contributions_by_user = [item['total_contributions'] for item in user_contributions]
+
+    # Lấy dữ liệu tổng số đóng góp theo thời gian (trong 30 ngày gần đây)
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=30)
+    contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
+
+    # Chuẩn bị dữ liệu cho biểu đồ
+    time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
+    contributions_counts = [item['total'] for item in contributions_over_time]
+
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
 
@@ -832,6 +849,10 @@ def statistical_analysis(request):
     contributions_counts = [item['total'] for item in contributions_by_faculty]
     approved_counts = [item['total'] for item in approved_by_faculty]
     context = {
+        'user_labels': user_labels,
+        'contributions_by_user': contributions_by_user,
+        'time_labels': time_labels,
+        'contributions_over_time': contributions_counts,
         'total_contributions': total_contributions,
         'approved_contributions': approved_contributions,
         'faculty_names': faculty_names,
