@@ -107,39 +107,61 @@
                 <main>
                     <div class="container-fluid px-4">
                         <h1 class="mt-4">Statistical Analysis</h1>
+                        {% if is_coordinator %}
+                            <div class="text-center">
+                                <p style="margin: 0px"><span style="color: red;">Students</span> in the {{request.user.userprofile.faculty}} Faculty: <span style="color: blue; font-size: 25px;">{{ total_students }}</span></p>
+                            </div>
+                            <div class="text-center">
+                                <p><span style="color: red;">Contributions</span> in the {{request.user.userprofile.faculty}} Faculty: <span style="color: blue; font-size: 25px;">{{ total_contribution }}</span></p>
+                            </div>
+                        {% endif %}
                         <div class="card mb-4">
                             <div class="card-body">
-                                {% if is_coordinator or is_admin %}
+                                {% if is_admin %}
                                 <div class="chart-container">
-                                    <h3>Total and Approved Contributions</h3>
-                                    <canvas id="contributionsPieChart"></canvas>
-                                </div>
+                                    <h3>Number of contribution per user (Top 3)</h3>
+                                    <canvas id="contributionsByUserBarChart"></canvas>
+                                </div>   
                                 {% endif %}
-                                
-                                {% if is_manager or is_admin %}
+
+                                {% if is_manager or is_coordinator %}
                                 <div class="chart-container">
-                                    <h3>Approved Contributions by Faculty</h3>
-                                    <canvas id="approvedByFacultyPieChart"></canvas>
-                                </div>
+                                    <h3>Percentage of total contributions by status</h3>
+                                    <canvas id="totalContributionsStatusPieChart"></canvas>
+                                </div>   
                                 {% endif %}
-                                
-                                {% if is_guest or is_admin %}
+
+                                {% if is_manager or is_guest %}
                                 <div class="chart-container">
-                                    <h3>Contributions by Faculty</h3>
+                                    <h3>Percentage of contributions by faculty</h3>
                                     <canvas id="contributionsByFacultyPieChart"></canvas>
-                                </div>
+                                </div>  
                                 {% endif %}
 
                                 {% if is_admin %}
                                 <div class="chart-container">
-                                    <h3>Total contributions over time</h3>
-                                    <canvas id="contributionsOverTimeLineChart"></canvas>
-                                </div>
+                                    <h3>Total Contribution and Approved Contribution</h3>
+                                    <canvas id="totalAndApprovedContributionsPieChart"></canvas>
+                                </div>  
+                                {% endif %}
 
+                                {% if is_coordinator %}
                                 <div class="chart-container">
-                                    <h3>Number of contributions per user</h3>
-                                    <canvas id="contributionsByUserColumnChart"></canvas>
+                                    <h3>Contributions without comments by faculty</h3>
+                                    <canvas id="commentsByFacultyPieChart"></canvas>
+                                </div>   
+                                {% endif %}
+
+                                {% if is_admin %}
+                                <div class="chart-container">
+                                    <h3>Approved Contribution by Faculty</h3>
+                                    <canvas id="approvedContributionsByFacultyBarChart"></canvas>
                                 </div>
+                                
+                                <div class="chart-container">
+                                    <h3>Number of students by Faculty</h3>
+                                    <canvas id="studentsByFacultyBarChart"></canvas>
+                                </div> 
                                 {% endif %}
                             </div>
                         </div>
@@ -165,30 +187,101 @@
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Kiểm tra xem biểu đồ Total and Approved Contributions có được hiển thị không
-                if (document.getElementById('contributionsPieChart')) {
-                    createPieChart('contributionsPieChart', ['Total Contributions', 'Approved Contributions'], [{{ total_contributions }}, {{ approved_contributions }}], ['#4e73df', '#1cc88a']);
-                }
-                
-                // Kiểm tra xem biểu đồ Contributions by Faculty có được hiển thị không
-                if (document.getElementById('contributionsByFacultyPieChart')) {
-                    createPieChart('contributionsByFacultyPieChart', {{ faculty_names|safe }}, {{ contributions_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
-                }
-                
-                // Kiểm tra xem biểu đồ Approved Contributions by Faculty có được hiển thị không
-                if (document.getElementById('approvedByFacultyPieChart')) {
-                    createPieChart('approvedByFacultyPieChart', {{ faculty_names|safe }}, {{ approved_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
-                }
-
-                if (document.getElementById('contributionsOverTimeLineChart')) {
-                    createLineChart('contributionsOverTimeLineChart', {{ time_labels|safe }}, {{ contributions_over_time|safe }}, 'Total Contributions', '#4e73df');
-                }
-
-                if (document.getElementById('contributionsByUserColumnChart')) {
-                    createColumnChart('contributionsByUserColumnChart', {{ user_labels|safe }}, {{ contributions_by_user|safe }}, 'Contributions per User', '#1cc88a');
-                }
-            });
+                {% if is_admin %}
+                createBarChart('contributionsByUserBarChart', {{ user_contributions_json|safe }}, 'User', 'Number of Contributions', '#1cc88a');
+                {% endif %}
+                {% if is_manager or is_coordinator %}
+                createPieChart('totalContributionsStatusPieChart', Object.keys({{ total_status_percentages|safe }}), Object.values({{ total_status_percentages|safe }}), ['#4e73df', '#1cc88a', '#e74a3b']);
+                {% endif %}
+                {% if is_manager or is_guest %}
+                createPieChart('contributionsByFacultyPieChart', Object.keys({{ faculty_percentages_json|safe }}), Object.values({{ faculty_percentages_json|safe }}), ['#4e73df', '#1cc88a', '#e74a3b']);
+                {% endif %}
+                {% if is_coordinator %}
+                createPieChart('commentsByFacultyPieChart', Object.keys({{ comments_by_faculty_percentages|safe }}), Object.values({{ comments_by_faculty_percentages|safe }}), ['#4e73df', '#1cc88a']);
+                {% endif %}
+                {% if is_admin %}
+                createPieCharts('totalAndApprovedContributionsPieChart', {{ total_contributions }}, {{ approved_contributions }});
+                {% endif %}                
+                {% if is_admin %}
+                var facultyNames = Object.keys({{ approved_contributions_by_faculty_json|safe }});
+                var facultyData = Object.values({{ approved_contributions_by_faculty_json|safe }});
+                createBarCharts('approvedContributionsByFacultyBarChart', facultyNames, facultyData, 'Faculty', 'Approved Contributions', '#1cc88a');              
             
+                createBarChart('studentsByFacultyBarChart', {{ students_by_faculty_json|safe }}, 'Faculty', 'Number of Students', '#1cc88a');
+                {% endif %}  
+            });
+
+            function createBarCharts(chartId, labels, data, xAxisLabel, yAxisLabel, backgroundColor) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: yAxisLabel,
+                            data: data,
+                            backgroundColor: backgroundColor
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xAxisLabel
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: yAxisLabel
+                                }
+                            }
+                        }
+                    }
+                });
+            }            
+
+            function createPieCharts(chartId, totalContributions, approvedContributions) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Total Contributions', 'Approved Contributions'],
+                        datasets: [{
+                            label: 'Total Contributions',
+                            data: [totalContributions, approvedContributions],
+                            backgroundColor: ['#4e73df', '#1cc88a']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            function createBarChart(chartId, data, label, datasetLabel, backgroundColor) {
+                new Chart(document.getElementById(chartId), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: datasetLabel,
+                            data: data.values,
+                            backgroundColor: backgroundColor
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        
+
             function createPieChart(chartId, labels, data, backgroundColors) {
                 new Chart(document.getElementById(chartId), {
                     type: 'pie',
@@ -196,53 +289,8 @@
                         labels: labels,
                         datasets: [{
                             data: data,
-                            backgroundColor: backgroundColors,
+                            backgroundColor: backgroundColors
                         }]
-                    }
-                });
-            }
-
-            function createLineChart(chartId, labels, data, label, borderColor) {
-                new Chart(document.getElementById(chartId), {
-                    type: 'line', // Chọn loại biểu đồ là đường
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: label,
-                            data: data,
-                            fill: false, // Không điền màu dưới đường
-                            borderColor: borderColor,
-                            borderWidth: 2 // Độ rộng của đường
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
-                            }
-                        }
-                    }
-                });
-            }
-
-            function createColumnChart(chartId, labels, data, label, backgroundColor) {
-                new Chart(document.getElementById(chartId), {
-                    type: 'bar', // Chọn loại biểu đồ là cột
-                    data: {
-                        labels: labels,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: backgroundColor,
-                    borderWidth: 1 // Độ rộng của đường viền cho cột
-                }]
-            },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
-                            }
-                        }
                     }
                 });
             }

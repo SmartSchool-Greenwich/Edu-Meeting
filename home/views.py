@@ -348,7 +348,7 @@ def create_account(request):
 
 
 def faculty_files(request, faculty_id):
-    if not is_coordinators(request.user) and not is_guests(request.user):
+    if not is_coordinators(request.user) and not is_guests(request.user) and not is_admins(request.user):
         return redirect('error_404')
 
     is_guest = False
@@ -826,6 +826,63 @@ def account_delete(request, pk):
         account.delete()
         return redirect('account_list')
     
+# def statistical_analysis(request):
+#     user_profile = get_object_or_404(UserProfile, user=request.user)
+#     is_coordinator = False
+#     is_manager = False
+#     is_guest = False
+#     is_admin = False
+    
+#     if request.user.is_authenticated:
+#         roles = [role.name for role in user_profile.roles.all()]
+
+#         if "marketing manager" in roles:
+#             is_manager = True
+#         elif "marketing coordinator" in roles:
+#             is_coordinator = True
+#         elif "guest" in roles:
+#             is_guest = True
+#         elif "admin" in roles:
+#             is_admin = True
+
+#     user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
+
+#     user_labels = [item['fullname'] for item in user_contributions]
+#     contributions_by_user = [item['total_contributions'] for item in user_contributions]
+
+#     end_date = timezone.now()
+#     start_date = end_date - timedelta(days=30)
+#     contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
+
+#     time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
+#     contributions_counts = [item['total'] for item in contributions_over_time]
+
+#     total_contributions = Contributions.objects.count()
+#     approved_contributions = Contributions.objects.filter(status="approved").count()
+
+#     contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
+#     approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
+
+#     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
+#     contributions_counts = [item['total'] for item in contributions_by_faculty]
+#     approved_counts = [item['total'] for item in approved_by_faculty]
+#     context = {
+#         'user_labels': user_labels,
+#         'contributions_by_user': contributions_by_user,
+#         'time_labels': time_labels,
+#         'contributions_over_time': contributions_counts,
+#         'total_contributions': total_contributions,
+#         'approved_contributions': approved_contributions,
+#         'faculty_names': faculty_names,
+#         'contributions_by_faculty': contributions_counts,
+#         'approved_by_faculty': approved_counts,
+#         'is_manager': is_manager,
+#         'is_coordinator': is_coordinator,
+#         'is_guest': is_guest,
+#         'is_admin': is_admin,
+#     }
+#     return render(request, 'statistical_analysis.html', context)
+import json
 def statistical_analysis(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
     is_coordinator = False
@@ -844,38 +901,75 @@ def statistical_analysis(request):
             is_guest = True
         elif "admin" in roles:
             is_admin = True
+    #1
+    user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).order_by('-total_contributions')[:3]
+    user_contributions_json = json.dumps({'labels': [user.fullname for user in user_contributions], 'values': [user.total_contributions for user in user_contributions]})
+    
+    #2
+    total_contributions = Contributions.objects.count()
+    approved_contributions = Contributions.objects.filter(status="approved").count()
+    waiting_contributions = Contributions.objects.filter(status="waiting").count()
+    rejected_contributions = Contributions.objects.filter(status="reject").count()
 
-    user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
+    total_status_percentages = {
+        'Approved': (approved_contributions / total_contributions) * 100,
+        'Waiting': (waiting_contributions / total_contributions) * 100,
+        'Rejected': (rejected_contributions / total_contributions) * 100
+    }
 
-    user_labels = [item['fullname'] for item in user_contributions]
-    contributions_by_user = [item['total_contributions'] for item in user_contributions]
+    #3
+    total_contributions = Contributions.objects.count()
+    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
+    faculty_percentages = {entry['faculty__name']: (entry['total'] / total_contributions * 100) for entry in contributions_by_faculty}
 
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=30)
-    contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
+    faculty_percentages_json = json.dumps(faculty_percentages)
 
-    time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
-    contributions_counts = [item['total'] for item in contributions_over_time]
+    #4 
+    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
 
+    contributions_with_comments = Contributions.objects.filter(comment__isnull=False).values('faculty__name').annotate(total=Count('id'))
+
+    contribution_percentages_with_comments = {}
+    for item in contributions_by_faculty:
+        faculty_name = item['faculty__name']
+        total = item['total']
+        with_comments = next((i['total'] for i in contributions_with_comments if i['faculty__name'] == faculty_name), 0)
+
+        contribution_percentages_with_comments[faculty_name] = (with_comments / total) * 100
+
+    #5   
+    if is_coordinator:
+        coordinator_faculty = user_profile.faculty
+        total_students = UserProfile.objects.filter(faculty=coordinator_faculty, roles__name='student').count()
+
+    #6
+    if is_coordinator:
+        total_contribution = Contributions.objects.filter(faculty=coordinator_faculty).count()
+
+    #7
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
 
-    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
-    approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
+    #8
+    approved_contributions_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
+    
+    approved_contributions_by_faculty_json = json.dumps({entry['faculty__name']: entry['total'] for entry in approved_contributions_by_faculty})
 
-    faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
-    contributions_counts = [item['total'] for item in contributions_by_faculty]
-    approved_counts = [item['total'] for item in approved_by_faculty]
+    #9
+    students_by_faculty = UserProfile.objects.filter(roles__name='student').values('faculty__name').annotate(total_students=Count('user'))
+    students_by_faculty_json = json.dumps({'labels': [item['faculty__name'] for item in students_by_faculty], 'values': [item['total_students'] for item in students_by_faculty]})
+    
     context = {
-        'user_labels': user_labels,
-        'contributions_by_user': contributions_by_user,
-        'time_labels': time_labels,
-        'contributions_over_time': contributions_counts,
+        'students_by_faculty_json': students_by_faculty_json,
+        'approved_contributions_by_faculty_json': approved_contributions_by_faculty_json,
         'total_contributions': total_contributions,
         'approved_contributions': approved_contributions,
-        'faculty_names': faculty_names,
-        'contributions_by_faculty': contributions_counts,
-        'approved_by_faculty': approved_counts,
+        'total_contribution': total_contribution if is_coordinator else None,
+        'total_students': total_students if is_coordinator else None,
+        'comments_by_faculty_percentages': contribution_percentages_with_comments,
+        'faculty_percentages_json': faculty_percentages_json,
+        'total_status_percentages': total_status_percentages,
+        'user_contributions_json': user_contributions_json,
         'is_manager': is_manager,
         'is_coordinator': is_coordinator,
         'is_guest': is_guest,
