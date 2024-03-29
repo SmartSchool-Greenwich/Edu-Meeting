@@ -76,10 +76,10 @@
                                       <th scope="col">Submission Date</th>
                                       <th scope="col">Faculty</th>
                                       <th scope="col">Status</th>
-                                    {% if is_cordinator %}
+                                    {% if is_coordinator %}
                                       <th class="text-center" scope="col">Action</th>
                                     {% endif %}
-                                    {% if is_director %}
+                                    {% if is_manager %}
                                       <th class="text-center" scope="col">Public Status</th>
                                       <th scope="col">Actions</th>
                                       <th scope="col">Download</th>
@@ -108,7 +108,7 @@
                                                 Waiting
                                             {% endif %}
                                         </td>
-                                        {% if is_cordinator %}
+                                        {% if is_coordinator %}
                                         <td>
                                             <div class="text-center">
                                             {% if contribution.status == 'waiting' %}
@@ -124,7 +124,7 @@
                                             </div>
                                         </td>
                                         {% endif %}  
-                                        {% if is_director %}    
+                                        {% if is_manager %}    
                                         <td>
                                             <div class="text-center">
                                             {% if contribution.public %}
@@ -135,7 +135,7 @@
                                           </div>
                                         </td>  
                                         {% endif %}  
-                                        {% if is_director %}
+                                        {% if is_manager %}
                                         <td>
                                             <a href="{% url 'contributions_detail' contribution.id %}" class="btn btn-warning btn-sm">View Detail</a>
                                         </td> 
@@ -147,8 +147,8 @@
                                     {% endfor %}
                                   </tbody>
                                 </table>
-                                {% if is_director %}
-                                <button type="submit" class="btn btn-primary" style="float: right">Download Selected Files</button>
+                                {% if is_manager %}
+                                <button type="submit" id="download-selected-button" class="btn btn-primary" style="float: right" disabled>Download Selected Files</button>
                                 {% endif %} 
                             </form>
                             </div>
@@ -203,16 +203,42 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", function() {
+
+                var downloadButton = document.getElementById('download-selected-button');
+                var checkboxes = document.querySelectorAll('input[name="contribution_ids"]');
+
+                function updateDownloadButtonState() {
+                    var atLeastOneChecked = false;
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked) {
+                            atLeastOneChecked = true;
+                        }
+                    });
+
+                    if (atLeastOneChecked) {
+                        downloadButton.removeAttribute('disabled');
+                    } else {
+                        downloadButton.setAttribute('disabled', 'disabled');
+                    }
+                }
+
+                updateDownloadButtonState();
+
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.addEventListener('change', updateDownloadButtonState);
+                });
+
                 var rejectButtons = document.querySelectorAll('.reject-btn');
                 rejectButtons.forEach(function(btn) {
                   btn.addEventListener('click', function() {
                     var contributionId = btn.getAttribute('data-contribution-id');
                     var form = document.getElementById('rejectForm');
                     form.action = '/ad/contribution/reject/' + contributionId + '/';
-                    document.getElementById('contributionId').value = contributionId; // Set hidden input value
+                    document.getElementById('contributionId').value = contributionId;
                   });
                 });
-              });
+
+            });
             </script>
     </body>
 </html>

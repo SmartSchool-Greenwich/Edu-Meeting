@@ -7,6 +7,7 @@
     <video autoplay muted loop id="bg-video">
       <source src="{% static 'images/course-video.mp4' %}" type="video/mp4"/>
     </video>
+    
 
     <div class="video-overlay header-text">
       <div class="container">
@@ -115,5 +116,44 @@
       </div>
     </div>
   </section>
+
+  <!-- Modal for welcome message -->
+  {% if show_welcome_modal %}
+  <div id="welcomeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="welcomeModalLabel">Welcome to Our System</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Welcome to our system! We're glad to have you onboard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Modal for last login message -->
+  {% if show_last_login_modal %}
+  <div id="lastLoginModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="lastLoginModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lastLoginModalLabel">Last Login Information</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Your last login was on: {{ last_login_time }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 
 {% endblock content %}

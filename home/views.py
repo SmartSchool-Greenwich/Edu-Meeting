@@ -4,10 +4,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from .models import ContributionFiles, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment
 from django.contrib.auth.decorators import login_required
-from django.utils.dateparse import parse_datetime
 from .forms import CommentForm, FileForm, RoleForm
 from django.urls import reverse
-import zipfile
 from io import BytesIO
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -16,8 +14,24 @@ from django.db.models import Count
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Q
-from datetime import datetime, timedelta
+from datetime import timedelta
+import zipfile
 import re
+
+def is_admins(user):
+    return user.is_authenticated and user.userprofile.roles.filter(name='admin').exists()
+
+def is_coordinators(user):
+    return user.is_authenticated and user.userprofile.roles.filter(name='marketing coordinator').exists()
+
+def is_managers(user):
+    return user.is_authenticated and user.userprofile.roles.filter(name='marketing manager').exists()
+
+def is_guests(user):
+    return user.is_authenticated and user.userprofile.roles.filter(name='guest').exists()
+
+def is_students(user):
+    return user.is_authenticated and user.userprofile.roles.filter(name='student').exists()
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -58,8 +72,6 @@ def register_view(request):
             password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
             if password == repassword:
                 if not re.match(password_pattern, password):
-                    # Add your logic here to inform the user about the password policy violation
-                    # For example, you might want to pass a message to your template
                     return render(request, 'register.html', {
                         'faculties': faculties,
                         'error_message': 'Password must include at least one lowercase letter, one uppercase letter, one special character, and one number.'
@@ -153,7 +165,10 @@ def home(request):
 
 
 def file_upload_view(request):
-    faculties = None  # Initialize faculties to None or an empty list
+    if not is_students(request.user):
+        return redirect('error_404')
+
+    faculties = None 
     
     if request.user.is_authenticated:
         user_profile = None
@@ -164,7 +179,6 @@ def file_upload_view(request):
             faculties = Faculties.objects.filter(id=user_profile.faculty.id)
             valid_academic_years = AcademicYear.objects.filter(closure__gt=timezone.now())
         except UserProfile.DoesNotExist:
-            # Handle the case where the user does not have a profile, according to your application's requirements
             pass
         
     if request.method == 'POST':
@@ -175,17 +189,15 @@ def file_upload_view(request):
 
         term = request.POST.get('term') == 'on'
 
-        # Check if any file upload is PDF, if so, redirect to home
         for file in request.FILES.getlist('word') + request.FILES.getlist('img'):
             if file.name.endswith('.pdf'):
                 messages.error(request, 'You can only upload document files end with .doc or .docx')
-                return redirect('file_upload')  # Redirect to home if PDF file is uploaded
+                return redirect('file_upload') 
 
         try:
             faculty = Faculties.objects.get(id=faculty_id)
             academic_year = AcademicYear.objects.get(id=academicYear)
 
-            # Create the contribution with the selected AcademicYear
             contribution = Contributions.objects.create(
                 title=title,
                 content=content,
@@ -195,7 +207,6 @@ def file_upload_view(request):
             )
             contribution.user.add(request.user.userprofile)
 
-            # Handle file uploads
             contribution_file = ContributionFiles(contribution=contribution)
             for file in request.FILES.getlist('word') + request.FILES.getlist('img'):
                 if file.name.endswith('.doc') or file.name.endswith('.docx'):
@@ -204,7 +215,6 @@ def file_upload_view(request):
                 elif not file.name.endswith('.pdf') and not contribution_file.img:
                     contribution_file.img = file
 
-            # Save ContributionFiles instance
             contribution_file.save()
 
             #sendmail
@@ -238,26 +248,10 @@ def file_upload_view(request):
         
     return render(request, 'upload.html', context)
 
-
-
-def enter_academic_year_code(request):
-    if request.method == 'POST':
-        code = request.POST.get('code')
-        try:
-            academic_year = AcademicYear.objects.get(code=code)
-            user_profile = request.user.userprofile
-            user_profile.academic_Year = academic_year
-            user_profile.save()
-            if user_profile.academic_Year and user_profile.academic_Year.closure < timezone.now():
-                # User has a valid AcademicYear, so you can continue to the upload logic.
-                messages.error(request, 'You can not enroll to expired Academic Year.')
-            return redirect('file_upload')  # Assuming this is the URL name for file upload view
-        except AcademicYear.DoesNotExist:
-            messages.error(request, 'Invalid code or Academic Year has expired.')
-    
-    return render(request, 'enter_academic_year_code.html')
-
 def update_contribution(request, pk):
+    if not is_students(request.user):
+        return redirect('error_404')
+
     contribution = get_object_or_404(Contributions, pk=pk)
 
     if request.method == 'POST':
@@ -291,6 +285,9 @@ def update_contribution(request, pk):
 
 @login_required
 def delete_contribution(request, pk):
+    if not is_students(request.user):
+        return redirect('error_404')
+
     contribution = get_object_or_404(Contributions, pk=pk)
     if request.method == 'GET': 
         contribution.delete()
@@ -300,6 +297,9 @@ def delete_contribution(request, pk):
 
 
 def upload_success(request):
+    if not is_students(request.user):
+        return redirect('error_404')
+
     is_student = True
     show_faculties = True
     context = {
@@ -309,6 +309,9 @@ def upload_success(request):
     return render(request, 'upload_success.html', context)
 
 def create_account(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -345,6 +348,9 @@ def create_account(request):
 
 
 def faculty_files(request, faculty_id):
+    if not is_coordinators(request.user) and not is_guests(request.user):
+        return redirect('error_404')
+
     is_guest = False
     is_manager = False
     is_coordinator = False
@@ -353,16 +359,13 @@ def faculty_files(request, faculty_id):
     faculty = user_profile.faculty
     faculties = Faculties.objects.none() 
     contributions = Contributions.objects.filter(faculty_id=faculty_id)
-    # Assuming 'contributions' already contains the contributions for a given faculty
     for contribution in contributions:
         contribution.comments = Comment.objects.filter(contribution=contribution)
 
 
     if request.user.is_authenticated:
-        # academic_year = faculty.academicYear if faculty else None
         roles = [role.name for role in user_profile.roles.all()]
 
-        # if academic_year and timezone.now() < academic_year.closure:
         if "marketing manager" in roles:
             is_manager = True
             faculties = Faculties.objects.all() 
@@ -402,28 +405,10 @@ def faculty_files(request, faculty_id):
                                                  'is_manager': is_manager,
                                                  'is_coordinator': is_coordinator})
                                                  
-
-def show_contributions(request):
-    is_manager = False
-    show_faculties = True 
-    user_profile = get_object_or_404(UserProfile, user=request.user)
-
-    if request.user.is_authenticated:
-        roles = [role.name for role in user_profile.roles.all()]
-
-        if "marketing manager" in roles:
-            is_manager = True
-            faculties = Faculties.objects.all() 
-
-    contributions = Contributions.objects.filter(status="approved")
-    
-    return render(request, 'show_contribution.html', {'contributions': contributions,
-                                                      'is_manager': is_manager,
-                                                      'show_faculties': show_faculties,
-                                                      'faculties' : faculties})
-
-
 def download_selected_contributions(request):
+    if not is_managers(request.user):
+        return redirect('error_404')
+    
     contribution_ids = request.POST.getlist('contribution_ids')
     files = ContributionFiles.objects.filter(contribution__id__in=contribution_ids)
 
@@ -479,6 +464,9 @@ def update_profile(request):
                                                        'is_student': is_student})
 
 def contributions_detail(request, contribution_id):
+    if is_guests(request.user):
+        return redirect('error_404')
+    
     contribution = get_object_or_404(Contributions, id=contribution_id)
     comments = Comment.objects.filter(contribution=contribution)
     can_update = False 
@@ -549,6 +537,9 @@ def contributions_detail(request, contribution_id):
 
 
 def my_contributions(request):
+    if not is_students(request.user):
+        return redirect('error_404')
+    
     is_student = True
     user_profile = UserProfile.objects.get(user=request.user)
     contributions = Contributions.objects.filter(user=user_profile).prefetch_related('faculty', 'files')
@@ -577,11 +568,17 @@ def my_contributions(request):
 
 
 def list_faculties(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     faculties = Faculties.objects.all()
     return render(request, 'list_faculties.html', {'faculties': faculties})
 
 
 def remove_faculty(request, faculty_id):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     faculty = get_object_or_404(Faculties, pk=faculty_id)
     faculty.delete()
     return redirect('list_faculties')
@@ -599,10 +596,8 @@ def user_profile(request):
     is_student = False
 
     if request.user.is_authenticated:
-        # academic_year = faculty.academicYear if faculty else None
         roles = [role.name for role in user_profile.roles.all()]
 
-        # if academic_year and timezone.now() < academic_year.closure:
         if "marketing manager" in roles:
             faculties = Faculties.objects.all()
             is_manager = True
@@ -620,13 +615,18 @@ def user_profile(request):
                                             'is_manager': is_manager,
                                             'is_student': is_student})
 
-#academic
 def list_academic_years(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     academic_years = AcademicYear.objects.all()
     return render(request, 'list_academic_years.html', {'academic_years': academic_years})
 
 
 def create_academic_year(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+
     page = "create"
     if request.method == "POST":
         closure = request.POST.get('closure')
@@ -640,6 +640,9 @@ def create_academic_year(request):
 
 
 def update_academic_year(request, year_id):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     page = "update"
     academic_year = get_object_or_404(AcademicYear, pk=year_id)
     if request.method == "POST":
@@ -655,20 +658,18 @@ def update_academic_year(request, year_id):
 
 
 def remove_academic_year(request, year_id):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     academic_year = get_object_or_404(AcademicYear, pk=year_id)
     academic_year.delete()
     return redirect('list_academic_years')
 
 
-
-
-#faculty
-def list_faculties(request):
-    faculties = Faculties.objects.all()
-    return render(request, 'list_faculties.html', {'faculties': faculties})
-
-
 def create_faculty(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     page = "create"
     if request.method == "POST":
         name = request.POST.get('name')
@@ -684,6 +685,9 @@ def create_faculty(request):
 
 
 def update_faculty(request, faculty_id):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     page = "update"
     faculty = get_object_or_404(Faculties, pk=faculty_id)
     if request.method == "POST":
@@ -701,28 +705,30 @@ def update_faculty(request, faculty_id):
     }
     return render(request, 'faculties_form.html', context)
 
-
-def remove_faculty(request, faculty_id):
-    faculty = get_object_or_404(Faculties, pk=faculty_id)
-    faculty.delete()
-    return redirect('list_faculties')
-
-
 def create_role(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     if request.method == "POST":
         form = RoleForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('role_list')  # giả sử bạn có một trang hiển thị danh sách các roles
+            return redirect('role_list')
     else:
         form = RoleForm()
     return render(request, 'create_role.html', {'form': form})
 
 def role_list(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     roles = Role.objects.all()
     return render(request, 'role_list.html', {'roles': roles})
 
 def delete_role(request, role_id):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     role = get_object_or_404(Role, id=role_id)
     role.delete()
     messages.success(request, 'The role has been successfully deleted!')
@@ -730,6 +736,9 @@ def delete_role(request, role_id):
 
 
 def all_contributions_view(request):
+    if not is_coordinators(request.user) and not is_managers(request.user):
+        return redirect('error_404')
+    
     user_profile = get_object_or_404(UserProfile, user=request.user)
     contributions = Contributions.objects.all()
     is_coordinator = False
@@ -741,6 +750,7 @@ def all_contributions_view(request):
 
         if "marketing manager" in roles:
             is_manager = True
+            contributions = Contributions.objects.filter(status="approved")
         else:
             is_coordinator = True
             contributions = Contributions.objects.filter(faculty=faculty)
@@ -760,12 +770,17 @@ def all_contributions_view(request):
     return render(request, 'manage_contributions.html', context)
 
     
-#account:
 def account_list(request):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     accounts = UserProfile.objects.all()
     return render(request, 'listAccount.html', {'accounts': accounts})
 
 def account_update(request, pk):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     user_profile = get_object_or_404(UserProfile, pk=pk)
 
     if request.method == 'POST':
@@ -798,6 +813,9 @@ def account_update(request, pk):
         })
 
 def account_delete(request, pk):
+    if not is_admins(request.user):
+        return redirect('error_404')
+    
     if request.method == 'GET':
         account = get_object_or_404(UserProfile, pk=pk)
         account.delete()
@@ -822,19 +840,15 @@ def statistical_analysis(request):
         elif "admin" in roles:
             is_admin = True
 
-     # Lấy dữ liệu số lượng đóng góp của mỗi người dùng
     user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
 
-    # Chuẩn bị dữ liệu cho biểu đồ
     user_labels = [item['fullname'] for item in user_contributions]
     contributions_by_user = [item['total_contributions'] for item in user_contributions]
 
-    # Lấy dữ liệu tổng số đóng góp theo thời gian (trong 30 ngày gần đây)
     end_date = timezone.now()
     start_date = end_date - timedelta(days=30)
     contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
 
-    # Chuẩn bị dữ liệu cho biểu đồ
     time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
     contributions_counts = [item['total'] for item in contributions_over_time]
 
@@ -865,6 +879,9 @@ def statistical_analysis(request):
     return render(request, 'statistical_analysis.html', context)
 
 def approve_contribution(request, contribution_id):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     contribution = get_object_or_404(Contributions, id=contribution_id)
     approve = request.GET.get('approve')
 
@@ -877,6 +894,9 @@ def approve_contribution(request, contribution_id):
     return redirect('manage_contributions')
 
 def public_contribution(request, contribution_id):
+    if not is_managers(request.user):
+        return redirect('error_404')
+    
     contribution = get_object_or_404(Contributions, id=contribution_id)
     public = request.GET.get('public')
     
@@ -893,6 +913,9 @@ def public_contribution(request, contribution_id):
 
 @csrf_protect
 def reject_contribution(request, contribution_id):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     if request.method == "POST":
         contribution = get_object_or_404(Contributions, id=contribution_id)
         reject_reason = request.POST.get("reject_reason")

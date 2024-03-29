@@ -87,7 +87,7 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                                 Faculties
                             </a>
-                            {% elif is_cordinator or is_director %}
+                            {% elif is_coordinator or is_manager %}
                             <div class="sb-sidenav-menu-heading">Contributions Management</div>
                             <a class="nav-link" href="{% url "manage_contributions" %}">
                               <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
@@ -109,14 +109,14 @@
                         <h1 class="mt-4">Statistical Analysis</h1>
                         <div class="card mb-4">
                             <div class="card-body">
-                                {% if is_cordinator or is_admin %}
+                                {% if is_coordinator or is_admin %}
                                 <div class="chart-container">
                                     <h3>Total and Approved Contributions</h3>
                                     <canvas id="contributionsPieChart"></canvas>
                                 </div>
                                 {% endif %}
                                 
-                                {% if is_director or is_admin %}
+                                {% if is_manager or is_admin %}
                                 <div class="chart-container">
                                     <h3>Approved Contributions by Faculty</h3>
                                     <canvas id="approvedByFacultyPieChart"></canvas>

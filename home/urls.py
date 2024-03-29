@@ -11,7 +11,6 @@ urlpatterns = [
     path('contribution/delete/<int:pk>/', views.delete_contribution, name='delete_contribution'),
     path('upload/success/', views.upload_success, name='success_url'),
     path('faculties/<int:faculty_id>/files/', views.faculty_files, name='faculty_files'),
-    path('show-contributions/', views.show_contributions, name='show_contributions'),
     path('download/contributions/', views.download_selected_contributions, name='download_selected_contributions'),
     path('update_profile/', views.update_profile, name='update_profile'),
     path('contributions/<int:contribution_id>/', views.contributions_detail, name='contributions_detail'),
@@ -46,7 +45,6 @@ urlpatterns = [
     path('ad/accounts/delete/<int:pk>/', views.account_delete, name='account_delete'),
     
     path('ad/statistical-analysis/', views.statistical_analysis, name='statistical_analysis'),
-    path('enter-academic-year-code/', views.enter_academic_year_code, name='enter_academic_year_code_url'),
 
     path('terms_policies/', views.term_policy, name='term_policy'),
     path('error_404/', views.error_404, name='error_404'),
