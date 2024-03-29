@@ -183,6 +183,7 @@
                   {% endfor %}
                 {% endif %}
               </div>
+              {% if can_comment %}
               <div class="feedback-box">
                 <form action="" method="POST">
                   {% csrf_token %}
@@ -193,6 +194,7 @@
                   </div>
                 </form>
               </div>
+              {% endif %}
               {% endif %}
             </div>
             {% empty %}

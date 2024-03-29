@@ -9,23 +9,17 @@ class Role(models.Model):
         return self.name
     
     def get_marketing_coordinator_role():
-        return Role.objects.filter(name='marketing cordinator').first()
+        return Role.objects.filter(name='marketing coordinator').first()
 
     @classmethod
     def create_default_role(cls):
         default_role, created = cls.objects.get_or_create(name='student')
         return default_role
-    
-    @classmethod
-    def get_or_create_guest_role(cls):
-        guest_role, created = cls.objects.get_or_create(name='guest')
-        return guest_role
 
 
 class AcademicYear(models.Model):
     closure = models.DateTimeField()
     finalClosure = models.DateTimeField()
-    code = models.CharField(max_length = 6, blank=True)
 
     def __str__(self):
         closure_date = self.closure.strftime('%Y-%m-%d')
@@ -41,8 +35,6 @@ class UserProfile(models.Model):
     email = models.EmailField(max_length=254, unique=True, blank=True, null=True)
     phone = models.CharField(max_length=15)
     
-    academic_Year = models.ForeignKey(AcademicYear,blank=True, null =True, on_delete=models.CASCADE)
-    
 
     def __str__(self):
         return self.fullname
@@ -51,9 +43,6 @@ class UserProfile(models.Model):
         super(UserProfile, self).save(*args, **kwargs)  
         if not self.roles.exists():  
             if self.faculty is None:
-                guest_role = Role.get_or_create_guest_role()
-                self.roles.add(guest_role)
-            else:
                 default_role = Role.create_default_role()
                 self.roles.add(default_role)
 

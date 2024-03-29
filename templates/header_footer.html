@@ -88,9 +88,9 @@ https://templatemo.com/tm-569-edu-meeting
               </li>
               {% endif %}
               {% if user.is_authenticated %}
-              <!-- Display the form or user-specific content -->
+
               <li >
-                <a href="{%url 'profile' %}">hello {{request.user.username}}</a>
+                <a href="{% url 'profile' %}">hello {{ request.user.userprofile.fullname }}</a>
               </li>
               <li>
                 <a href="{% url 'logout'%}">Logout</a>
@@ -256,21 +256,6 @@ https://templatemo.com/tm-569-edu-meeting
     $(window).scroll(function () {
       checkSection();
     });
-
-    function toggleUploadButton() {
-      var checkBox = document.getElementById("id_term");
-      var uploadButton = document.getElementById("uploadButton");
-
-      if (checkBox.checked == true) {
-        uploadButton.disabled = false;
-        uploadButton.classList.add("enable-hover"); // Thêm class để kích hoạt hiệu ứng hover
-      } else {
-        uploadButton.disabled = true;
-        uploadButton.classList.remove("enable-hover"); // Loại bỏ class để vô hiệu hóa hiệu ứng hover
-      }
-    }
-
-    window.onload = toggleUploadButton;
   </script>
 </body>
 </html>

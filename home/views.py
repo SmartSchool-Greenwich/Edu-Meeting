@@ -338,7 +338,7 @@ def create_account(request):
             selected_role = Role.objects.get(id=role_id)
             new_profile.roles.add(selected_role)
 
-            return redirect('login')
+            return redirect('account_list')
     else: 
         roles = Role.objects.all()
         faculties = Faculties.objects.all() 
@@ -377,6 +377,11 @@ def faculty_files(request, faculty_id):
             faculties = Faculties.objects.all() 
             contributions = Contributions.objects.filter(faculty_id=faculty_id, status="approved")
 
+        if "marketing coordinator" in roles and (timezone.now() - contribution.createAt).days > 14:
+            can_comment = False
+        else:
+            can_comment = True
+
     faculty = get_object_or_404(Faculties, pk=faculty_id)
     files = ContributionFiles.objects.filter(contribution__in=contributions).distinct()
     comment_form = CommentForm()   
@@ -403,7 +408,8 @@ def faculty_files(request, faculty_id):
                                                  'faculties': faculties,
                                                  'show_faculties': show_faculties,
                                                  'is_manager': is_manager,
-                                                 'is_coordinator': is_coordinator})
+                                                 'is_coordinator': is_coordinator,
+                                                 'can_comment': can_comment,})
                                                  
 def download_selected_contributions(request):
     if not is_managers(request.user):
@@ -469,7 +475,6 @@ def contributions_detail(request, contribution_id):
     
     contribution = get_object_or_404(Contributions, id=contribution_id)
     comments = Comment.objects.filter(contribution=contribution)
-    can_update = False 
     user_profile = request.user.userprofile
     show_faculties = True 
     faculties = Faculties.objects.none() 
@@ -491,14 +496,15 @@ def contributions_detail(request, contribution_id):
             is_student = True
             show_faculties = False
 
-        try:
-            user_profile = request.user.userprofile
-            faculty = user_profile.faculty
-            academic_year = user_profile.academic_Year
-            if academic_year and timezone.now() < academic_year.finalClosure:
-                can_update = True
-        except UserProfile.DoesNotExist:
-            can_update = False 
+        if "marketing coordinator" in roles and (timezone.now() - contribution.createAt).days > 14:
+            can_comment = False
+        else:
+            can_comment = True
+
+        academic_year = contribution.academic_Year
+        if academic_year:
+            contribution.is_expired = timezone.now() > academic_year.finalClosure
+
 
     if request.method == "POST":
         if 'comment' in request.POST:
@@ -526,12 +532,12 @@ def contributions_detail(request, contribution_id):
         'comments': comments,
         'comment_form': comment_form,
         'file_form': file_form,
-        'can_update': can_update,
         'show_faculties': show_faculties,
         'is_coordinator': is_coordinator,
         'is_student': is_student,
         'is_manager': is_manager,
         'faculties': faculties,
+        'can_comment': can_comment,
     })    
 
 
@@ -541,25 +547,17 @@ def my_contributions(request):
         return redirect('error_404')
     
     is_student = True
+    can_update = True
     user_profile = UserProfile.objects.get(user=request.user)
     contributions = Contributions.objects.filter(user=user_profile).prefetch_related('faculty', 'files')
-    can_update = True
     
     if request.user.is_authenticated:
-        try:
-            user_profile = request.user.userprofile
-            faculty = user_profile.faculty
-            academic_year = user_profile.academic_Year
-            if user_profile.academic_Year:
-                if academic_year and timezone.now() > academic_year.finalClosure:
-                    can_update = False
+        for contribution in contributions:
+            academic_year = contribution.academic_Year
+            if academic_year:
+                contribution.is_expired = timezone.now() > academic_year.finalClosure
 
-        except UserProfile.DoesNotExist:
-            can_update = True
-
-    
     context = {
-        'can_update': can_update,
         'contributions': contributions,
         'is_student': is_student
     }
@@ -762,10 +760,17 @@ def all_contributions_view(request):
             Q(title__icontains=query)  
         )
 
+    all_academic_years = AcademicYear.objects.all()
+
+    academic_year_id = request.GET.get('academic_year')
+    if academic_year_id:
+        contributions = contributions.filter(academic_Year_id=academic_year_id)
+
     context = {
         'contributions': contributions,
         'is_manager': is_manager,
         'is_coordinator': is_coordinator,
+        'all_academic_years': all_academic_years,
     }
     return render(request, 'manage_contributions.html', context)
 

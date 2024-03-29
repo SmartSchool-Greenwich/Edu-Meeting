@@ -29,6 +29,14 @@
         color: #fff;
         margin: 20px 0;
       }
+
+      .truncate-text {
+        white-space: nowrap;      
+        overflow: hidden;         
+        text-overflow: ellipsis;   
+        display: inline-block;    
+        max-width: 200px;          
+      }    
     </style>
 
     <!-- Main Content -->
@@ -42,6 +50,8 @@
                 <th scope="col">Title</th>
                 <th scope="col">Description</th>
                 <th scope="col">Created Time</th>
+                <th scope="col">Closure Day</th>
+                <th scope="col">Final Closure Day</th>
                 <th scope="col">Status</th>
                 <th scope="col">Actions</th>
               </tr>
@@ -49,9 +59,13 @@
             <tbody>
             {% for contribution in contributions %}
               <tr>
-                  <td>{{ contribution.title }}</td>
+                  <td>
+                      <span class="truncate-text">{{ contribution.title }}</span>
+                  </td>              
                   <td>{{ contribution.content|default:"No description provided" }}</td>
                   <td>{{ contribution.createAt|date:"H:i d-m-Y" }}</td>
+                  <td>{{ contribution.academic_Year.closure|date:"H:i d-m-Y" }}</td>
+                  <td>{{ contribution.academic_Year.finalClosure|date:"H:i d-m-Y" }}</td>
                   <td>
                     {% if contribution.status == 'approved' %}
                         Approved
@@ -62,16 +76,13 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% if can_update and not contribution.status == 'approved' and not contribution.status == 'rejected' %}
-                        <a href="{% url 'update_contribution' pk=contribution.id %}" class="btn btn-primary btn-sm">Update</a> |
-                    {% endif %}
-                
-                    {% if can_update and not contribution.status == 'approved' %}
-          
+                    {% if not contribution.status == 'approved' %}
+                        {% if contribution.is_expired %}
+                        {% else %}
+                            <a href="{% url 'update_contribution' pk=contribution.id %}" class="btn btn-primary btn-sm">Update</a> |
                             <a href="{% url 'delete_contribution' contribution.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Remove</a> | 
-                        
+                        {% endif %}
                     {% endif %}
-                
                     <a href="{% url 'contributions_detail' contribution.id %}" class="btn btn-warning btn-sm">View Detail</a>
                 </td>                
               </tr>

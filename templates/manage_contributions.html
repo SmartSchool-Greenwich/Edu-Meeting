@@ -67,34 +67,46 @@
                         <h1 class="mt-4">List of Contributions</h1>
                         <div class="card mb-4">
                             <div class="card-body">
-                              <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
+                            <form action="{% url 'manage_contributions' %}" method="get">
+                                <div class="mb-3">
+                                    <label for="academicYearFilter" class="form-label">Filter by Academic Year:</label>
+                                    <select class="form-select" id="academicYearFilter" name="academic_year">
+                                        <option value="">-- Select Academic Year --</option>
+                                        {% for academic_year in all_academic_years %}
+                                            <option value="{{ academic_year.id }}">{{ academic_year }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </form>
+                            <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
                                 <table class="table mt-3">
-                                  <thead class="thead-dark">
+                                    <thead class="thead-dark">
                                     <tr>
-                                      <th scope="col">Student Name</th>
-                                      <th scope="col">Article Title</th>
-                                      <th scope="col">Submission Date</th>
-                                      <th scope="col">Faculty</th>
-                                      <th scope="col">Status</th>
+                                        <th scope="col">Student Name</th>
+                                        <th scope="col">Article Title</th>
+                                        <th scope="col">Submission Date</th>
+                                        <th scope="col">Faculty</th>
+                                        <th scope="col">Status</th>
                                     {% if is_coordinator %}
-                                      <th class="text-center" scope="col">Action</th>
+                                        <th class="text-center" scope="col">Action</th>
                                     {% endif %}
                                     {% if is_manager %}
-                                      <th class="text-center" scope="col">Public Status</th>
-                                      <th scope="col">Actions</th>
-                                      <th scope="col">Download</th>
+                                        <th class="text-center" scope="col">Public Status</th>
+                                        <th scope="col">Actions</th>
+                                        <th scope="col">Download</th>
                                     {% endif %}
                                     </tr>
-                                  </thead>
-                                  <tbody>
+                                    </thead>
+                                    <tbody>
                                     {% csrf_token %}
                                     {% for contribution in contributions %}
                                     <tr>
                                         <td>
-                                          {% for user in contribution.user.all %}
-                                              {{ user.fullname }}
-                                              {% if not forloop.last %}, {% endif %}
-                                          {% endfor %}
+                                            {% for user in contribution.user.all %}
+                                                {{ user.fullname }}
+                                                {% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
                                         </td>
                                         <td>{{ contribution.title }}</td>
                                         <td>{{ contribution.createAt }}</td>
@@ -128,11 +140,11 @@
                                         <td>
                                             <div class="text-center">
                                             {% if contribution.public %}
-                                              <a href="{% url 'public_contribution' contribution.id %}?public=non" class="btn btn-danger btn-sm">Take Down</a>
+                                                <a href="{% url 'public_contribution' contribution.id %}?public=non" class="btn btn-danger btn-sm">Take Down</a>
                                             {% else %}
                                                 <a href="{% url 'public_contribution' contribution.id %}?public=pub" class="btn btn-success btn-sm">Push On</a>
                                             {% endif %}
-                                          </div>
+                                            </div>
                                         </td>  
                                         {% endif %}  
                                         {% if is_manager %}
@@ -145,7 +157,7 @@
                                         {% endif %}        
                                     </tr>
                                     {% endfor %}
-                                  </tbody>
+                                    </tbody>
                                 </table>
                                 {% if is_manager %}
                                 <button type="submit" id="download-selected-button" class="btn btn-primary" style="float: right" disabled>Download Selected Files</button>

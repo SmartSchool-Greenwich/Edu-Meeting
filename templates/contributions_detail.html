@@ -141,7 +141,7 @@
                     {% endif %}
                   </div>
                   {% endfor %}
-                  {% if can_update %}
+                  {% if not contribution.is_expired %}
                     {% if not is_coordinator and not is_manager %}
                     <a href="{% url 'update_contribution' pk=contribution.id %}" type="submit" class="btn btn-primary" >
                       Update contribution
@@ -175,7 +175,7 @@
                     {% endif %}
                   </div>
                 </div>
-                {% if not is_manager %}
+                {% if not is_manager and can_comment %}
                 <div class="feedback-box">
                   <form action="" method="POST">
                     {% csrf_token %}
