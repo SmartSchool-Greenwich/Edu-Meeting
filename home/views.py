@@ -1,10 +1,11 @@
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from .models import ContributionFiles, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment
+from .models import ContributionFiles, Room, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment,Room, Message
 from django.contrib.auth.decorators import login_required
-from .forms import CommentForm, FileForm, RoleForm
+from .forms import CommentForm, FileForm, RoleForm, RoomForm
 from django.urls import reverse
 from io import BytesIO
 from django.utils import timezone
@@ -14,7 +15,7 @@ from django.db.models import Count
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Q
-from datetime import timedelta
+from datetime import datetime, timedelta
 import zipfile
 import re
 
@@ -50,7 +51,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            return redirect('home')
+            redirect('home')
         else:
             pass
 
@@ -348,7 +349,7 @@ def create_account(request):
 
 
 def faculty_files(request, faculty_id):
-    if not is_coordinators(request.user) and not is_guests(request.user) and not is_admins(request.user):
+    if not is_coordinators(request.user) and not is_guests(request.user):
         return redirect('error_404')
 
     is_guest = False
@@ -826,63 +827,6 @@ def account_delete(request, pk):
         account.delete()
         return redirect('account_list')
     
-# def statistical_analysis(request):
-#     user_profile = get_object_or_404(UserProfile, user=request.user)
-#     is_coordinator = False
-#     is_manager = False
-#     is_guest = False
-#     is_admin = False
-    
-#     if request.user.is_authenticated:
-#         roles = [role.name for role in user_profile.roles.all()]
-
-#         if "marketing manager" in roles:
-#             is_manager = True
-#         elif "marketing coordinator" in roles:
-#             is_coordinator = True
-#         elif "guest" in roles:
-#             is_guest = True
-#         elif "admin" in roles:
-#             is_admin = True
-
-#     user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
-
-#     user_labels = [item['fullname'] for item in user_contributions]
-#     contributions_by_user = [item['total_contributions'] for item in user_contributions]
-
-#     end_date = timezone.now()
-#     start_date = end_date - timedelta(days=30)
-#     contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
-
-#     time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
-#     contributions_counts = [item['total'] for item in contributions_over_time]
-
-#     total_contributions = Contributions.objects.count()
-#     approved_contributions = Contributions.objects.filter(status="approved").count()
-
-#     contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
-#     approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
-
-#     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
-#     contributions_counts = [item['total'] for item in contributions_by_faculty]
-#     approved_counts = [item['total'] for item in approved_by_faculty]
-#     context = {
-#         'user_labels': user_labels,
-#         'contributions_by_user': contributions_by_user,
-#         'time_labels': time_labels,
-#         'contributions_over_time': contributions_counts,
-#         'total_contributions': total_contributions,
-#         'approved_contributions': approved_contributions,
-#         'faculty_names': faculty_names,
-#         'contributions_by_faculty': contributions_counts,
-#         'approved_by_faculty': approved_counts,
-#         'is_manager': is_manager,
-#         'is_coordinator': is_coordinator,
-#         'is_guest': is_guest,
-#         'is_admin': is_admin,
-#     }
-#     return render(request, 'statistical_analysis.html', context)
-import json
 def statistical_analysis(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
     is_coordinator = False
@@ -901,75 +845,38 @@ def statistical_analysis(request):
             is_guest = True
         elif "admin" in roles:
             is_admin = True
-    #1
-    user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).order_by('-total_contributions')[:3]
-    user_contributions_json = json.dumps({'labels': [user.fullname for user in user_contributions], 'values': [user.total_contributions for user in user_contributions]})
-    
-    #2
-    total_contributions = Contributions.objects.count()
-    approved_contributions = Contributions.objects.filter(status="approved").count()
-    waiting_contributions = Contributions.objects.filter(status="waiting").count()
-    rejected_contributions = Contributions.objects.filter(status="reject").count()
 
-    total_status_percentages = {
-        'Approved': (approved_contributions / total_contributions) * 100,
-        'Waiting': (waiting_contributions / total_contributions) * 100,
-        'Rejected': (rejected_contributions / total_contributions) * 100
-    }
+    user_contributions = UserProfile.objects.annotate(total_contributions=Count('contributions')).values('fullname', 'total_contributions')
 
-    #3
-    total_contributions = Contributions.objects.count()
-    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
-    faculty_percentages = {entry['faculty__name']: (entry['total'] / total_contributions * 100) for entry in contributions_by_faculty}
+    user_labels = [item['fullname'] for item in user_contributions]
+    contributions_by_user = [item['total_contributions'] for item in user_contributions]
 
-    faculty_percentages_json = json.dumps(faculty_percentages)
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=30)
+    contributions_over_time = Contributions.objects.filter(createAt__range=(start_date, end_date)).values('createAt__date').annotate(total=Count('id'))
 
-    #4 
-    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
+    time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
+    contributions_counts = [item['total'] for item in contributions_over_time]
 
-    contributions_with_comments = Contributions.objects.filter(comment__isnull=False).values('faculty__name').annotate(total=Count('id'))
-
-    contribution_percentages_with_comments = {}
-    for item in contributions_by_faculty:
-        faculty_name = item['faculty__name']
-        total = item['total']
-        with_comments = next((i['total'] for i in contributions_with_comments if i['faculty__name'] == faculty_name), 0)
-
-        contribution_percentages_with_comments[faculty_name] = (with_comments / total) * 100
-
-    #5   
-    if is_coordinator:
-        coordinator_faculty = user_profile.faculty
-        total_students = UserProfile.objects.filter(faculty=coordinator_faculty, roles__name='student').count()
-
-    #6
-    if is_coordinator:
-        total_contribution = Contributions.objects.filter(faculty=coordinator_faculty).count()
-
-    #7
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
 
-    #8
-    approved_contributions_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
-    
-    approved_contributions_by_faculty_json = json.dumps({entry['faculty__name']: entry['total'] for entry in approved_contributions_by_faculty})
+    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
+    approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
 
-    #9
-    students_by_faculty = UserProfile.objects.filter(roles__name='student').values('faculty__name').annotate(total_students=Count('user'))
-    students_by_faculty_json = json.dumps({'labels': [item['faculty__name'] for item in students_by_faculty], 'values': [item['total_students'] for item in students_by_faculty]})
-    
+    faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
+    contributions_counts = [item['total'] for item in contributions_by_faculty]
+    approved_counts = [item['total'] for item in approved_by_faculty]
     context = {
-        'students_by_faculty_json': students_by_faculty_json,
-        'approved_contributions_by_faculty_json': approved_contributions_by_faculty_json,
+        'user_labels': user_labels,
+        'contributions_by_user': contributions_by_user,
+        'time_labels': time_labels,
+        'contributions_over_time': contributions_counts,
         'total_contributions': total_contributions,
         'approved_contributions': approved_contributions,
-        'total_contribution': total_contribution if is_coordinator else None,
-        'total_students': total_students if is_coordinator else None,
-        'comments_by_faculty_percentages': contribution_percentages_with_comments,
-        'faculty_percentages_json': faculty_percentages_json,
-        'total_status_percentages': total_status_percentages,
-        'user_contributions_json': user_contributions_json,
+        'faculty_names': faculty_names,
+        'contributions_by_faculty': contributions_counts,
+        'approved_by_faculty': approved_counts,
         'is_manager': is_manager,
         'is_coordinator': is_coordinator,
         'is_guest': is_guest,
@@ -1042,3 +949,121 @@ def term_policy(request):
     
 def error_404(request):
     return render(request, '404.html')
+
+
+
+
+
+@login_required
+def room(request,pk):
+    room = Room.objects.get(id=pk)
+    pa = room.participants.all()
+    messages = room.message_set.all()
+    if request.user.userprofile == room.host or room.is_private==False or request.user in pa:
+        if request.method == 'POST':
+            message = Message.objects.create(
+                user = request.user.userprofile,
+                room = room,
+                body =request.POST.get('body'),
+                image =request.FILES.get('image'),
+            )
+            room.participants.add(request.user.userprofile)
+            return redirect('room',pk=room.id)
+        context = {'rooms':room, 'message':messages, 'participants': pa,
+                   'created_at': datetime.now(),  # Dummy value, replace it with the actual creation time
+                    'message_id': None}
+        return render(request,'room.html',context)
+
+    if room.is_private and request.use.userprofile not in pa:
+        if request.method == 'POST' and 'answer' in request.POST:
+            user_answer = request.POST.get('answer', '').strip().lower()
+            # Tách chuỗi answer của phòng thành một mảng các keyword
+            correct_answers = room.answer.lower().split(',')  # Giả sử answer được lưu dưới dạng 'keyword1,keyword2,...'
+            # Kiểm tra xem có bất kỳ keyword nào trong mảng có trong chuỗi người dùng nhập không
+            if any(keyword.strip() in user_answer for keyword in correct_answers):
+                room.participants.add(request.user.userprofile)
+                return redirect('room', pk=room.id)
+            else:
+                # Có thể thêm thông báo lỗi nếu cần
+                return redirect('home')
+
+        # Hiển thị form trả lời cho người dùng nếu là GET request hoặc câu trả lời sai
+        return render(request, 'room_question.html', {'room': room})
+
+    
+
+
+
+#can dang nhap moi dung dc
+@login_required(login_url='login')
+def createRoom(request):
+    form = RoomForm()
+    topic = Faculties.objects.all()
+
+
+    answer_keywords = request.POST.get('answer', '').strip()
+    answer_keywords = ','.join([keyword.strip() for keyword in answer_keywords.split(',')])
+
+
+    #kiem tra phuong thuc
+    if request.method == 'POST':
+        topic_name = request.POST.get('topic')
+
+        Room.objects.create(
+            host =request.user.userprofile,
+            topic = request.POST.get('facuti'),
+            name = request.POST.get('name'),
+            description = request.POST.get('description'),
+            is_private = request.POST.get('is_private'),
+            question = request.POST.get('question'),
+            answer = answer_keywords,
+        )
+        return redirect('home')
+    context = {'form':form,"topic":topic}
+    return render(request,'room_form.html',context)
+    
+
+@login_required(login_url='login')
+def updateRoom(request,pk):
+    room = Room.objects.get(id= pk)
+    form = RoomForm(instance=room)
+    topic = Faculties.objects.all()
+    if request.user.userprofile != room.host:
+        return HttpResponse('')
+    if request.method == 'POST':
+        topic_name = request.POST.get('topic')
+        topic, created = Faculties.objects.get_or_create(name = topic_name)
+        room.name = request.POST.get('name')
+        room.topic = topic
+        room.description = request.POST.get('description')
+        room.password = request.POST.get('password')
+        room.save()
+
+        return redirect('home')
+
+    context = {'form':form,'topic':topic,'room':room}
+    return render(request,'room_form.html',context)
+
+@login_required(login_url='login')
+def deleteRoom(request,pk):
+    room = Room.objects.get(id = pk)
+    if request.method == 'POST':
+        room.delete()
+        return redirect('home')
+    return render(request,'delete.html',{'obj':room})
+
+
+@login_required(login_url='login')
+def deleteMessage(request,pk):
+    message = Message.objects.get(id = pk)
+    # message = get_object_or_404(Message, id=pk)
+    if request.user == message.user :
+        if request.method == 'POST':
+            message.delete()
+            return redirect('room',pk=message.room.id)
+    return render(request,'delete.html',{'obj':message})
+
+
+def list_room(request):
+    room = Room.objects.all()
+    return render(request, 'list_room.html',{'room':room})

@@ -67,7 +67,6 @@
                         <h1 class="mt-4">List of Contributions</h1>
                         <div class="card mb-4">
                             <div class="card-body">
-                            {% if is_manager %}
                             <form action="{% url 'manage_contributions' %}" method="get">
                                 <div class="mb-3">
                                     <label for="academicYearFilter" class="form-label">Filter by Academic Year:</label>
@@ -80,7 +79,6 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary">Filter</button>
                             </form>
-                            {% endif %}
                             <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
                                 <table class="table mt-3">
                                     <thead class="thead-dark">

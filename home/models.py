@@ -54,6 +54,40 @@ class Faculties(models.Model):
     
 
 
+class Room(models.Model):
+    # id = models.UUIDField(primary_key= True, default =uuid.uuid4)
+    host = models.ForeignKey(UserProfile,on_delete=models.SET_NULL,null =True)
+    topic = models.ForeignKey(Faculties,on_delete=models.SET_NULL,null=True)
+    name = models.CharField(max_length=200,null =True)
+    img = models.ImageField(default='',null=True)
+    description = models.TextField(null = True, blank = True)
+    participants = models.ManyToManyField(UserProfile,related_name='participants',blank=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    is_private = models.BooleanField(default=False)  # New field to indicate privacy
+    question = models.CharField(max_length=200,null=True, blank=True)  # New field for question
+    answer = models.CharField(max_length=200,null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated','created']
+
+    def __str__(seft):
+        return seft.name
+    
+class Message(models.Model):
+    user = models.ForeignKey(UserProfile,on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    image = models.ImageField(blank=True, null=True)
+    body = models.TextField()
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['updated','-created']
+    def __str__(seft):
+        return seft.body[0:50]
+    
+
+
 class Contributions(models.Model):
     user = models.ManyToManyField(UserProfile)
     title = models.CharField(max_length=30)

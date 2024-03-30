@@ -49,4 +49,14 @@ urlpatterns = [
     path('terms_policies/', views.term_policy, name='term_policy'),
     path('error_404/', views.error_404, name='error_404'),
 
+
+    
+    path('room/<str:pk>/',views.room,name="room"),
+    path('create-room/',views.createRoom, name ="create-room"),
+    path('update-room/<slug:pk>/',views.updateRoom, name ="update-room"),
+    path('delete-room/<slug:pk>/',views.deleteRoom, name ="delete-room"),
+    path('list_room/',views.list_room, name ="list_room"),
+    path('delete-message/<str:pk>/',views.deleteMessage, name ="delete-message"),
+
+
 ]

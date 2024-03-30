@@ -1,5 +1,5 @@
 from django import forms
-from .models import Comment, ContributionFiles, Role
+from .models import Comment, ContributionFiles, Role, Room
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -17,3 +17,10 @@ class RoleForm(forms.ModelForm):
 
 class RejectForm(forms.Form):
     reject_reason = forms.CharField(widget=forms.Textarea, label='Reason Reject')
+
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = '__all__'
+        exclude =['host','participants']
