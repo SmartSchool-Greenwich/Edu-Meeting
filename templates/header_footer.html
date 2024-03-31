@@ -35,6 +35,19 @@ https://templatemo.com/tm-569-edu-meeting
 </head>
 
 <body>
+
+  {% if messages %}
+  {% for message in messages %}
+    {% if 'login_error' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'welcome_back' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'welcome' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% endif %}
+  {% endfor %}
+  {% endif %}
+
   <!-- ***** Header Area Start ***** -->
   <header class="header-area header-sticky">
     <div class="container">

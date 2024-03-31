@@ -42,9 +42,8 @@ class UserProfile(models.Model):
     def save(self, *args, **kwargs):
         super(UserProfile, self).save(*args, **kwargs)  
         if not self.roles.exists():  
-            if self.faculty is None:
-                default_role = Role.create_default_role()
-                self.roles.add(default_role)
+            default_role = Role.create_default_role()
+            self.roles.add(default_role)
 
 class Faculties(models.Model):
     name = models.CharField(max_length = 40)

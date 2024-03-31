@@ -45,18 +45,15 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # Check if last_login is None before the login attempt.
             is_first_login = user.last_login is None
             
             login(request, user)
             
-            # Now we use is_first_login to determine if it was the first login.
             if is_first_login:
-                messages.info(request, 'Welcome to Edu-Meeting! This appears to be your first login.')
+                messages.info(request, 'Welcome to Edu-Meeting! This appears to be your first login.', extra_tags='welcome')
             else:
-                # Format the last login time. You might need to import datetime or use Django's timezone.
                 last_login_time = user.last_login.strftime('%Y-%m-%d %H:%M:%S')
-                messages.info(request, f'Welcome back! You last logged in on {last_login_time}.')
+                messages.info(request, f'Welcome back! You last logged in on {last_login_time}.', extra_tags='welcome_back')
                 
             return redirect('home')
         else:
@@ -981,7 +978,7 @@ def room(request,pk):
                     'message_id': None}
         return render(request,'room.html',context)
 
-    if room.is_private and request.use.userprofile not in pa:
+    if room.is_private and request.user.userprofile not in pa:
         if request.method == 'POST' and 'answer' in request.POST:
             user_answer = request.POST.get('answer', '').strip().lower()
             # Tách chuỗi answer của phòng thành một mảng các keyword

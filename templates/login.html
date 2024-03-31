@@ -111,13 +111,6 @@
     }
   </style>
 
-  {% if messages %}
-  {% for message in messages %}
-    {% if 'login_error' in message.tags %}
-      <div class="alert alert-info" role="alert">{{ message }}</div>
-    {% endif %}
-  {% endfor %}
-  {% endif %}
 
   <!-- ***** Main Banner Area Start ***** -->
   <section class="section main-banner" id="top" data-section="section1">
