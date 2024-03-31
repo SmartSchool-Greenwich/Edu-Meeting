@@ -1,0 +1,25 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Reports</title>
+</head>
+<body>
+    <h1>Most Viewed Pages</h1>
+    <ul>
+        {% for page in most_viewed_pages %}
+            <li>{{ page.page_name }} - View Count: {{ page.view_count }}</li>
+        {% endfor %}
+    </ul>
+
+    <h1>Most Active Users</h1>
+    <ul>
+        {% for user in most_active_users %}
+            <li>{{ user.username }} - Login Count: {{ user.login_count }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
+

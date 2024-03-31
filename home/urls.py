@@ -58,5 +58,6 @@ urlpatterns = [
     path('list_room/',views.list_room, name ="list_room"),
     path('delete-message/<str:pk>/',views.deleteMessage, name ="delete-message"),
 
-
+    
+    path('system-reports/', views.system_reports, name='system_reports'),
 ]

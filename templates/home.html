@@ -2,13 +2,18 @@
 {%load static%}
 {% block content %}
 
+  {% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-info" role="alert">{{ message }}</div>
+  {% endfor %}
+  {% endif %}
+
   <!-- ***** Main Banner Area Start ***** -->
   <section class="section main-banner" id="top" data-section="section1">
     <video autoplay muted loop id="bg-video">
       <source src="{% static 'images/course-video.mp4' %}" type="video/mp4"/>
     </video>
     
-
     <div class="video-overlay header-text">
       <div class="container">
         <div class="row">
@@ -29,6 +34,7 @@
         </div>
       </div>
     </div>
+  
   </section>
   <!-- ***** Main Banner Area End ***** -->
 
@@ -118,61 +124,42 @@
   </section>
 
   <!-- Modal for welcome message -->
-  
-<!-- Modal chào mừng -->
-<div class="modal fade" id="welcomeModal" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+  {% if show_welcome_modal %}
+  <div id="welcomeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="welcomeModalLabel">Welcome {{ username }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Welcome to our system! We're glad to have you onboard.</p>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="welcomeModalLabel">Welcome to Our System</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <p>Welcome to our system! We're glad to have you onboard.</p>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  {% endif %}
 
-<!-- Modal thông tin đăng nhập cuối cùng -->
-<div class="modal fade" id="lastLoginModal" tabindex="-1" role="dialog" aria-labelledby="lastLoginModalLabel" aria-hidden="true">
+  <!-- Modal for last login message -->
+  {% if show_last_login_modal %}
+  <div id="lastLoginModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="lastLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="lastLoginModalLabel">Last Login Information</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Your last login was on: {{ last_login_time }}</p>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lastLoginModalLabel">Last Login Information</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <p>Your last login was on: {{ last_login_time }}</p>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  {% endif %}
 
-<script>
-$(document).ready(function() {
-    var isFirstLogin = "{{ first_login }}"; // Biến này sẽ được render từ template Django
-
-    // Hàm để đóng modal
-    function closeModal() {
-        $('.modal').modal('hide');
-    }
-
-    // Nếu là lần đăng nhập đầu tiên, hiển thị modal chào mừng và đóng nó sau 10 giây
-    if (isFirstLogin === "True") {
-        $('#welcomeModal').modal('show');
-        setTimeout(closeModal, 10000); // 10000 milliseconds = 10 seconds
-    } else {
-        // Nếu không phải lần đăng nhập đầu tiên, hiển thị modal thông tin đăng nhập cuối cùng và đóng nó sau 10 giây
-        $('#lastLoginModal').modal('show');
-        setTimeout(closeModal, 10000); // 10000 milliseconds = 10 seconds
-    }
-});
-
-</script>
 
 {% endblock content %}

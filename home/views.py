@@ -3,8 +3,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from .models import ContributionFiles, Room, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment,Room, Message
+from .models import ContributionFiles, Room, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment,Room, Message, User, PageView
 from django.contrib.auth.decorators import login_required
+
 from .forms import CommentForm, FileForm, RoleForm, RoomForm
 from django.urls import reverse
 from io import BytesIO
@@ -39,21 +40,27 @@ def login_view(request):
         return redirect('home')
     
     if request.method == 'POST':
-        username = request.POST.get('username').lower()
+        username = request.POST.get('username')
         password = request.POST.get('password')
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            pass
-        
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
+            # Check if last_login is None before the login attempt.
+            is_first_login = user.last_login is None
+            
             login(request, user)
-            redirect('home')
+            
+            # Now we use is_first_login to determine if it was the first login.
+            if is_first_login:
+                messages.info(request, 'Welcome to Edu-Meeting! This appears to be your first login.')
+            else:
+                # Format the last login time. You might need to import datetime or use Django's timezone.
+                last_login_time = user.last_login.strftime('%Y-%m-%d %H:%M:%S')
+                messages.info(request, f'Welcome back! You last logged in on {last_login_time}.')
+                
+            return redirect('home')
         else:
-            pass
+           messages.error(request, 'Login failed. Please check your username and password.', extra_tags='login_error')
 
     return render(request, 'login.html')
 
@@ -1067,3 +1074,11 @@ def deleteMessage(request,pk):
 def list_room(request):
     room = Room.objects.all()
     return render(request, 'list_room.html',{'room':room})
+
+
+def system_reports(request):
+    most_viewed_pages = PageView.objects.values('page_name').annotate(view_count=Count('page_name')).order_by('-view_count')[:10]
+    
+    most_active_users = User.objects.annotate(login_count=Count('last_login')).order_by('-login_count')[:10]
+    
+    return render(request, 'system_reports.html', {'most_viewed_pages': most_viewed_pages, 'most_active_users': most_active_users})
