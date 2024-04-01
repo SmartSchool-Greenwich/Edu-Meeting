@@ -57,7 +57,5 @@ urlpatterns = [
     path('delete-room/<slug:pk>/',views.deleteRoom, name ="delete-room"),
     path('list_room/',views.list_room, name ="list_room"),
     path('delete-message/<str:pk>/',views.deleteMessage, name ="delete-message"),
-
-    
-    path('system-reports/', views.system_reports, name='system_reports'),
+    path('delete_file/<int:file_id>/', views.delete_file, name='delete_file'),
 ]

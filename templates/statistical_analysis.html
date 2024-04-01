@@ -141,6 +141,15 @@
                                     <canvas id="contributionsByUserColumnChart"></canvas>
                                 </div>
                                 {% endif %}
+                                <div class="chart-container">
+                                    <h2>Top 10 Viewed Pages</h2>
+                                    <canvas id="pageViewsChart"></canvas>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <h2>Top 10 Active Users</h2>
+                                    <canvas id="activeUsersChart"></canvas>
+                                </div>                                                            
                             </div>
                         </div>
                     </div>
@@ -165,17 +174,14 @@
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Kiểm tra xem biểu đồ Total and Approved Contributions có được hiển thị không
                 if (document.getElementById('contributionsPieChart')) {
                     createPieChart('contributionsPieChart', ['Total Contributions', 'Approved Contributions'], [{{ total_contributions }}, {{ approved_contributions }}], ['#4e73df', '#1cc88a']);
                 }
                 
-                // Kiểm tra xem biểu đồ Contributions by Faculty có được hiển thị không
                 if (document.getElementById('contributionsByFacultyPieChart')) {
                     createPieChart('contributionsByFacultyPieChart', {{ faculty_names|safe }}, {{ contributions_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
                 }
                 
-                // Kiểm tra xem biểu đồ Approved Contributions by Faculty có được hiển thị không
                 if (document.getElementById('approvedByFacultyPieChart')) {
                     createPieChart('approvedByFacultyPieChart', {{ faculty_names|safe }}, {{ approved_by_faculty|safe }}, ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796']);
                 }
@@ -204,21 +210,21 @@
 
             function createLineChart(chartId, labels, data, label, borderColor) {
                 new Chart(document.getElementById(chartId), {
-                    type: 'line', // Chọn loại biểu đồ là đường
+                    type: 'line',
                     data: {
                         labels: labels,
                         datasets: [{
                             label: label,
                             data: data,
-                            fill: false, // Không điền màu dưới đường
+                            fill: false, 
                             borderColor: borderColor,
-                            borderWidth: 2 // Độ rộng của đường
+                            borderWidth: 2 
                         }]
                     },
                     options: {
                         scales: {
                             y: {
-                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
+                                beginAtZero: true 
                             }
                         }
                     }
@@ -227,26 +233,76 @@
 
             function createColumnChart(chartId, labels, data, label, backgroundColor) {
                 new Chart(document.getElementById(chartId), {
-                    type: 'bar', // Chọn loại biểu đồ là cột
+                    type: 'bar',
                     data: {
                         labels: labels,
                 datasets: [{
                     label: label,
                     data: data,
                     backgroundColor: backgroundColor,
-                    borderWidth: 1 // Độ rộng của đường viền cho cột
+                    borderWidth: 1 
                 }]
             },
                     options: {
                         scales: {
                             y: {
-                                beginAtZero: true // Bắt đầu từ giá trị 0 trên trục y
+                                beginAtZero: true
                             }
                         }
                     }
                 });
             }
         </script>
+
+        <script>
+            const pageViewsData = JSON.parse('{{ page_views_data | safe }}');
+            const activeUsersData = JSON.parse('{{ active_users_data | safe }}');
+            
+            const ctxPageViews = document.getElementById('pageViewsChart').getContext('2d');
+            const pageViewsChart = new Chart(ctxPageViews, {
+                type: 'bar', 
+                data: {
+                    labels: pageViewsData.labels,
+                    datasets: [{
+                        label: 'Page Views',
+                        data: pageViewsData.data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            const ctxActiveUsers = document.getElementById('activeUsersChart').getContext('2d');
+            const activeUsersChart = new Chart(ctxActiveUsers, {
+                type: 'bar',
+                data: {
+                    labels: activeUsersData.labels,
+                    datasets: [{
+                        label: 'Activities Count',
+                        data: activeUsersData.data,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            </script>
+            
     </body>
 </html>
 

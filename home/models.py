@@ -34,6 +34,7 @@ class UserProfile(models.Model):
     
     email = models.EmailField(max_length=254, unique=True, blank=True, null=True)
     phone = models.CharField(max_length=15)
+    activities_count = models.IntegerField(default=0)
     
 
     def __str__(self):
@@ -44,6 +45,11 @@ class UserProfile(models.Model):
         if not self.roles.exists():  
             default_role = Role.create_default_role()
             self.roles.add(default_role)
+
+    def submit_assignment(request):
+        profile = UserProfile.objects.get(user=request.user)
+        profile.activities_count += 1
+        profile.save()
 
 class Faculties(models.Model):
     name = models.CharField(max_length = 40)
@@ -57,7 +63,6 @@ class Room(models.Model):
     host = models.ForeignKey(UserProfile,on_delete=models.SET_NULL,null =True)
     topic = models.ForeignKey(Faculties,on_delete=models.SET_NULL,null=True)
     name = models.CharField(max_length=200,null =True)
-    img = models.ImageField(default='',null=True)
     description = models.TextField(null = True, blank = True)
     participants = models.ManyToManyField(UserProfile,related_name='participants',blank=True)
     updated = models.DateTimeField(auto_now=True)
@@ -71,6 +76,15 @@ class Room(models.Model):
 
     def __str__(seft):
         return seft.name
+    
+class RoomFile(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='files')
+    uploaded_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='room_files/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"File {self.id} in room {self.room.name}"
     
 class Message(models.Model):
     user = models.ForeignKey(UserProfile,on_delete=models.CASCADE)
@@ -120,6 +134,9 @@ class Comment(models.Model):
         return f"{self.user.user.username} comment on {self.contribution}"
 
 class PageView(models.Model):
-    page_name = models.CharField(max_length=100)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=200,null =True)
+    views = models.IntegerField(default=0)
+    last_viewed = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name

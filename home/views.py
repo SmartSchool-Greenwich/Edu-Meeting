@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from .models import ContributionFiles, Room, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment,Room, Message, User, PageView
+from .models import ContributionFiles, Room, RoomFile, UserProfile, Faculties, Contributions, Role,AcademicYear, Comment,Room, Message, User, PageView
 from django.contrib.auth.decorators import login_required
 
 from .forms import CommentForm, FileForm, RoleForm, RoomForm
@@ -82,6 +82,7 @@ def register_view(request):
                         'error_message': 'Password must include at least one lowercase letter, one uppercase letter, one special character, and one number.'
                     })
                 if User.objects.filter(username=username).exists():
+                    messages.error(request, 'Username already exists!', extra_tags='username_exist')
                     return redirect('register')
                 else:
                     user = User.objects.create_user(username=username, password=password, email=email)
@@ -90,6 +91,7 @@ def register_view(request):
                     userprofile = UserProfile.objects.create(user=user, fullname=fullname, email=email, phone=phone, faculty=faculty)
                     return redirect('login')
             else:
+                messages.error(request, 'Confirm password do not match', extra_tags='password_notmatch')
                 return redirect('register')
         
     return render(request, 'register.html', {'faculties': faculties})
@@ -827,10 +829,11 @@ def account_delete(request, pk):
         return redirect('error_404')
     
     if request.method == 'GET':
-        account = get_object_or_404(UserProfile, pk=pk)
+        account = get_object_or_404(User, pk=pk)
         account.delete()
         return redirect('account_list')
-    
+
+import json
 def statistical_analysis(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
     is_coordinator = False
@@ -871,6 +874,19 @@ def statistical_analysis(request):
     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
     contributions_counts = [item['total'] for item in contributions_by_faculty]
     approved_counts = [item['total'] for item in approved_by_faculty]
+
+    page_views = PageView.objects.all().order_by('-views')[:10]  
+    active_users = UserProfile.objects.all().order_by('-activities_count')[:10]  
+
+    page_views_data = {
+        "labels": [pv.name for pv in page_views],
+        "data": [pv.views for pv in page_views],
+    }
+
+    active_users_data = {
+        "labels": [up.user.username for up in active_users],
+        "data": [up.activities_count for up in active_users],
+    }
     context = {
         'user_labels': user_labels,
         'contributions_by_user': contributions_by_user,
@@ -881,6 +897,8 @@ def statistical_analysis(request):
         'faculty_names': faculty_names,
         'contributions_by_faculty': contributions_counts,
         'approved_by_faculty': approved_counts,
+        'page_views_data': json.dumps(page_views_data),
+        'active_users_data': json.dumps(active_users_data),
         'is_manager': is_manager,
         'is_coordinator': is_coordinator,
         'is_guest': is_guest,
@@ -960,25 +978,50 @@ def error_404(request):
 
 @login_required
 def room(request,pk):
+    if is_admins(request.user):
+        return redirect('error_404')
+    
     room = Room.objects.get(id=pk)
     pa = room.participants.all()
     messages = room.message_set.all()
-    if request.user.userprofile == room.host or room.is_private==False or request.user in pa:
+    files = room.files.all() 
+    can_upload = False
+    
+    if request.user.is_authenticated:
+        if request.user.userprofile == room.host:
+            can_upload = True
+
+    if request.user.userprofile == room.host or room.is_private==False or request.user.userprofile in pa:
         if request.method == 'POST':
-            message = Message.objects.create(
-                user = request.user.userprofile,
-                room = room,
-                body =request.POST.get('body'),
-                image =request.FILES.get('image'),
-            )
-            room.participants.add(request.user.userprofile)
+            body = request.POST.get('body')
+            if body:
+                message = Message.objects.create(
+                    user = request.user.userprofile,
+                    room = room,
+                    body = body,
+                    image = request.FILES.get('image'),
+                )
+                room.participants.add(request.user.userprofile)
+
+            if 'file' in request.FILES: 
+                uploaded_file = request.FILES['file']
+                RoomFile.objects.create(
+                    room=room,
+                    uploaded_by=request.user.userprofile,
+                    file=uploaded_file,
+                )
             return redirect('room',pk=room.id)
-        context = {'rooms':room, 'message':messages, 'participants': pa,
-                   'created_at': datetime.now(), 
+        
+        context = {'rooms':room,
+                    'message':messages, 
+                    'participants': pa,
+                    'created_at': datetime.now(), 
+                    'files': files,
+                    'can_upload': can_upload,
                     'message_id': None}
         return render(request,'room.html',context)
-
-    if room.is_private and request.user.userprofile not in pa:
+    
+    elif room.is_private and request.user.userprofile not in pa:
         if request.method == 'POST' and 'answer' in request.POST:
             user_answer = request.POST.get('answer', '').strip().lower()
             correct_answers = room.answer.lower().split(',')  
@@ -986,71 +1029,82 @@ def room(request,pk):
                 room.participants.add(request.user.userprofile)
                 return redirect('room', pk=room.id)
             else:
-                return redirect('home')
-        else:
-            return redirect('home')
-
-    return render(request, 'room_question.html', {'room': room})
-
-    
-
+                return redirect('list_room')
+            
+        return render(request, 'room_question.html', {'room': room})
+        
+    return redirect('list_room')
 
 
 @login_required(login_url='login')
 def createRoom(request):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     form = RoomForm()
-    topic = Faculties.objects.all()
-
-
-    answer_keywords = request.POST.get('answer', '').strip()
-    answer_keywords = ','.join([keyword.strip() for keyword in answer_keywords.split(',')])
-
+    faculties = Faculties.objects.all()
 
     if request.method == 'POST':
-        topic_name = request.POST.get('topic')
+        topic_id = request.POST.get('faculty')
+        topic = Faculties.objects.get(pk=topic_id)
 
         Room.objects.create(
-            host =request.user.userprofile,
-            topic = request.POST.get('facuti'),
-            name = request.POST.get('name'),
-            description = request.POST.get('description'),
-            is_private = request.POST.get('is_private'),
-            question = request.POST.get('question'),
-            answer = answer_keywords,
+            host=request.user.userprofile,
+            topic=topic,
+            name=request.POST.get('name'),
+            description=request.POST.get('description'),
+            is_private=request.POST.get('is_private') == 'True',
+            question=request.POST.get('question'),
+            answer=request.POST.get('answer'),
         )
-        return redirect('home')
-    context = {'form':form,"topic":topic}
-    return render(request,'room_form.html',context)
+        return redirect('list_room')
+
+    context = {'form': form, 'faculties': faculties}
+    return render(request, 'room_form.html', context)
+
     
 
 @login_required(login_url='login')
 def updateRoom(request,pk):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     room = Room.objects.get(id= pk)
     form = RoomForm(instance=room)
-    topic = Faculties.objects.all()
+    faculties = Faculties.objects.all()
     if request.user.userprofile != room.host:
         return HttpResponse('')
     if request.method == 'POST':
         topic_name = request.POST.get('topic')
-        topic, created = Faculties.objects.get_or_create(name = topic_name)
+        faculties, created = Faculties.objects.get_or_create(name = topic_name)
         room.name = request.POST.get('name')
-        room.topic = topic
+        room.topic = faculties
         room.description = request.POST.get('description')
         room.password = request.POST.get('password')
         room.save()
 
-        return redirect('home')
+        return redirect('list_room')
 
-    context = {'form':form,'topic':topic,'room':room}
+    context = {'form':form,'faculties':faculties,'room':room}
     return render(request,'room_form.html',context)
 
 @login_required(login_url='login')
 def deleteRoom(request,pk):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     room = Room.objects.get(id = pk)
     if request.method == 'POST':
         room.delete()
-        return redirect('home')
+        return redirect('list_room')
     return render(request,'delete.html',{'obj':room})
+
+@login_required
+def delete_file(request, file_id):
+    file = get_object_or_404(RoomFile, id=file_id)
+    if file.uploaded_by == request.user.userprofile: 
+        file.delete()
+    return redirect('room', pk=file.room.id)
 
 
 @login_required(login_url='login')
@@ -1064,13 +1118,22 @@ def deleteMessage(request,pk):
 
 
 def list_room(request):
+    if is_admins(request.user):
+        return redirect('error_404')
+    
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    is_coordinator = False
+    
+    if request.user.is_authenticated:
+        roles = [role.name for role in user_profile.roles.all()]
+
+        if "marketing coordinator" in roles:
+            is_coordinator = True
+    
     room = Room.objects.all()
-    return render(request, 'list_room.html',{'room':room})
+    return render(request, 'list_room.html',{
+        'room':room,
+        'is_coordinator':is_coordinator,
+        })
 
 
-def system_reports(request):
-    most_viewed_pages = PageView.objects.values('page_name').annotate(view_count=Count('page_name')).order_by('-view_count')[:10]
-    
-    most_active_users = User.objects.annotate(login_count=Count('last_login')).order_by('-login_count')[:10]
-    
-    return render(request, 'system_reports.html', {'most_viewed_pages': most_viewed_pages, 'most_active_users': most_active_users})

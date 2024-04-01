@@ -36,11 +36,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     padding: 0px 12px;
   }
   
   .roomList__header h1 {
+    margin-bottom: 1rem;
     font-size: 2.5rem;
     color: #FFF;
   }
@@ -87,7 +88,6 @@
   .roomListRoom__author span {
     font-weight: bold;
     color: var(--color-main);
-    margin-left: 1rem;
   }
   
   .roomListRoom__content a {
@@ -128,27 +128,26 @@
 
 <section class="apply-now" id="apply">
   <div class="container">
-    <!-- Room List Start -->
     <div class="roomList">
       <div class="roomList__header">
         <div>
-          <h1>Rooms list</h1>
-          <p>{{rooms.count}} Rooms available</p>
+          <h1>Chat Rooms</h1>
+          <p>{{room.count}} available</p>
         </div>
+        {% if is_coordinator %}
         <a class="btn btn--main" href="{% url 'create-room' %}">
           Create Room
         </a>
+        {% endif %}
       </div>
+
       <div class="scrollable-container">
         {% for room in room %}
         <div class="container">
           <div class="roomListRoom">
             <div class="roomListRoom__header">
               <a href="" class="roomListRoom__author">
-                <div class="avatar avatar--small">
-                  <img src="{{ room.host.avatar.url }}" />
-                </div>
-                <span>@{{room.host.username}}</span>
+                <span>ROOM HOST: {{ room.host.fullname }}</span>
               </a>
               <div class="roomListRoom__actions">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-globe-asia-australia" viewBox="0 0 16 16">
@@ -160,7 +159,6 @@
             </div>
             <div class="roomListRoom__content">
               <a href="{% url 'room' room.id %}">{{room.name}}</a>
-              <!-- <img src="{{room.host.avatar.url}}" alt="" width="420" height="400"> -->
               <p>
                 {{room.description}}
               </p>
@@ -178,8 +176,8 @@
         </div>
         {% endfor %}
       </div>
+      
     </div>
-    <!-- Room List End -->
   </div>
 </section>
 {%endblock%}
