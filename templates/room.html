@@ -74,12 +74,21 @@
   .thread {
     background-color: #FFF6E0;
     display: flex;
-    flex-direction: row;
-    align-items: center; 
+    flex-direction: column;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     border-radius: 15px;
     margin: 15px 0;
     padding: 20px;
+  }
+
+  .thread-detail {
+    display: flex;
+    flex-direction: row;
+    align-items: center; 
+  }
+
+  .thread-post {
+    margin-left: auto; 
   }
 
   .form{
@@ -182,15 +191,20 @@
                 {% else %}
                   {% for message in message %}
                   <div class="thread">
-                    <p>
-                      <strong>@{{message.user.username}}: </strong>{{message.body}}
-                      <br>
-                      {% if message.image %}
-                      <img src="{{ message.image.url }}" style="width: 25%"  alt="Sent image">
-                      {% endif %}
-                      <br>
-                      <small>Posted {{message.created|timesince}} ago</small>
-                    </p>
+                    <div class="thread-detail">
+                      <p>
+                        <strong>@{{message.user.username}}: </strong>{{message.body}}
+                        {% if message.image %}
+                        <br>
+                        <img src="{{ message.image.url }}" style="width: 25%"  alt="Sent image">
+                        {% endif %}
+                      </p>
+                    </div>
+                    <div class="thread-post">
+                      <p style="margin-left: auto">
+                        <small>Posted {{message.created|timesince}} ago</small>
+                      </p>
+                    </div>
                   </div>
                   {% endfor %}
                 {% endif %}

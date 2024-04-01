@@ -974,31 +974,28 @@ def room(request,pk):
             room.participants.add(request.user.userprofile)
             return redirect('room',pk=room.id)
         context = {'rooms':room, 'message':messages, 'participants': pa,
-                   'created_at': datetime.now(),  # Dummy value, replace it with the actual creation time
+                   'created_at': datetime.now(), 
                     'message_id': None}
         return render(request,'room.html',context)
 
     if room.is_private and request.user.userprofile not in pa:
         if request.method == 'POST' and 'answer' in request.POST:
             user_answer = request.POST.get('answer', '').strip().lower()
-            # Tách chuỗi answer của phòng thành một mảng các keyword
-            correct_answers = room.answer.lower().split(',')  # Giả sử answer được lưu dưới dạng 'keyword1,keyword2,...'
-            # Kiểm tra xem có bất kỳ keyword nào trong mảng có trong chuỗi người dùng nhập không
+            correct_answers = room.answer.lower().split(',')  
             if any(keyword.strip() in user_answer for keyword in correct_answers):
                 room.participants.add(request.user.userprofile)
                 return redirect('room', pk=room.id)
             else:
-                # Có thể thêm thông báo lỗi nếu cần
                 return redirect('home')
+        else:
+            return redirect('home')
 
-        # Hiển thị form trả lời cho người dùng nếu là GET request hoặc câu trả lời sai
-        return render(request, 'room_question.html', {'room': room})
+    return render(request, 'room_question.html', {'room': room})
 
     
 
 
 
-#can dang nhap moi dung dc
 @login_required(login_url='login')
 def createRoom(request):
     form = RoomForm()
@@ -1009,7 +1006,6 @@ def createRoom(request):
     answer_keywords = ','.join([keyword.strip() for keyword in answer_keywords.split(',')])
 
 
-    #kiem tra phuong thuc
     if request.method == 'POST':
         topic_name = request.POST.get('topic')
 
@@ -1060,7 +1056,6 @@ def deleteRoom(request,pk):
 @login_required(login_url='login')
 def deleteMessage(request,pk):
     message = Message.objects.get(id = pk)
-    # message = get_object_or_404(Message, id=pk)
     if request.user == message.user :
         if request.method == 'POST':
             message.delete()

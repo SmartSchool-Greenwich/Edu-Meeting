@@ -54,7 +54,6 @@ class Faculties(models.Model):
 
 
 class Room(models.Model):
-    # id = models.UUIDField(primary_key= True, default =uuid.uuid4)
     host = models.ForeignKey(UserProfile,on_delete=models.SET_NULL,null =True)
     topic = models.ForeignKey(Faculties,on_delete=models.SET_NULL,null=True)
     name = models.CharField(max_length=200,null =True)
@@ -63,8 +62,8 @@ class Room(models.Model):
     participants = models.ManyToManyField(UserProfile,related_name='participants',blank=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    is_private = models.BooleanField(default=False)  # New field to indicate privacy
-    question = models.CharField(max_length=200,null=True, blank=True)  # New field for question
+    is_private = models.BooleanField(default=False) 
+    question = models.CharField(max_length=200,null=True, blank=True) 
     answer = models.CharField(max_length=200,null=True, blank=True)
 
     class Meta:
