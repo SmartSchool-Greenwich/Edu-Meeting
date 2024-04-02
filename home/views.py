@@ -1102,8 +1102,7 @@ def deleteRoom(request,pk):
 @login_required
 def delete_file(request, file_id):
     file = get_object_or_404(RoomFile, id=file_id)
-    if file.uploaded_by == request.user.userprofile: 
-        file.delete()
+    file.delete()
     return redirect('room', pk=file.room.id)
 
 
