@@ -82,6 +82,8 @@
         border-radius: 4px;
         padding: 10px;
         margin-top: 10px;
+        max-height: 200px;
+        overflow-y: auto;
       }
 
       .feedback-form {
@@ -181,8 +183,8 @@
                     {% csrf_token %}
                     <div class="feedback-form">
                       <input type="hidden" name="contribution_id" value="{{ contribution.id }}">
-                      <textarea name="comment" placeholder="Leave your comment..."></textarea>
-                      <button>Submit Feedback</button>
+                      <textarea name="comment" placeholder="Leave your comment..." required></textarea>
+                      <button class="btn btn-sm" style="width: 100%">Submit Feedback</button>
                     </div>
                   </form>
                 </div>

@@ -45,7 +45,7 @@
         {% csrf_token %}
         <div class="mb-3">
             <label class="form-label" for="id_faculty">Room Faculty: </label>
-            <select name="faculty" id="id_faculty" class="form-control">
+            <select name="faculty" id="id_faculty" class="form-control" required>
               <option value="">Select ...</option>
               {% for faculty in faculties %}
               <option value="{{ faculty.pk }}">{{ faculty.name }}</option>
@@ -66,7 +66,7 @@
 
         <div class="mb-3">
             <label for="room_status" class="form-label">Room Status (Select):</label>
-            <select id="room_status" class="form-control" name="is_private" onchange="toggleQuestionAnswer();">
+            <select id="room_status" class="form-control" name="is_private" onchange="toggleQuestionAnswer();" required>
               <option value="False">Public</option>
               <option value="True">Private</option>
             </select>            

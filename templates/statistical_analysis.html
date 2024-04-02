@@ -125,13 +125,15 @@
                                 
                                 {% if is_guest or is_admin %}
                                 <div class="chart-container">
-                                    <h3>Contributions by Faculty</h3>
-                                    <select id="academicYearFilter" onchange="updateContributionsChart()">
-                                        <option value="">Select Academic Year</option>
-                                        {% for year in academic_years %}
-                                        <option value="{{ year.id }}">{{ year.closure|date:"m/Y"}} - {{ year.finalClosure|date:"m/Y"}} </option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="chart-title" style="display: flex; justify-content: space-between;">
+                                        <h3>Contributions by Faculty</h3>
+                                        <select id="academicYearFilter" onchange="updateContributionsChart()" style="border-radius: 5px;">
+                                            <option value="">Filter by Academic Year</option>
+                                            {% for year in academic_years %}
+                                            <option value="{{ year.id }}">{{ year.closure|date:"m/Y"}} - {{ year.finalClosure|date:"m/Y"}} </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                     <canvas id="contributionsByFacultyPieChart"></canvas>
                                 </div>
                                 {% endif %}

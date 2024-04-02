@@ -77,7 +77,7 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                             </form>
                             <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
                                 <table class="table mt-3">
@@ -160,7 +160,7 @@
                                     </tbody>
                                 </table>
                                 {% if is_manager %}
-                                <button type="submit" id="download-selected-button" class="btn btn-primary" style="float: right" disabled>Download Selected Files</button>
+                                <button type="submit" id="download-selected-button" class="btn btn-primary btn-sm" style="float: right" disabled>Download Selected Files</button>
                                 {% endif %} 
                             </form>
                             </div>

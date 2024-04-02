@@ -58,6 +58,8 @@
         border-radius: 4px;
         padding: 10px;
         margin-top: 10px;
+        max-height: 200px;
+        overflow-y: auto;
       }
 
       .feedback-form {
@@ -114,6 +116,13 @@
           color: #fff;
           text-align: center; /* Center the header text */
       }
+
+      .truncated {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 900px;
+      }
     </style>
 
     <section class="apply-now" id="apply">
@@ -169,8 +178,8 @@
                 </div>
               {% endif %}
               {% if not is_guest and not is_manager %}
+              <h5 style="margin-bottom: 5px;">Contribution feedbacks:</h5>
               <div class="feedback-box">
-                <h5 style="margin-bottom: 5px;">Contribution feedbacks:</h5>
                 {% if contribution.comments.count == 0 %}
                   <p><strong>No one has commented yet...</strong></p>
                 {% else %}
@@ -189,8 +198,8 @@
                   {% csrf_token %}
                   <div class="feedback-form">
                     <input type="hidden" name="contribution_id" value="{{ contribution.id }}">
-                    <textarea name="comment" placeholder="Leave your comment..."></textarea>
-                    <button>Submit Feedback</button>
+                    <textarea name="comment" placeholder="Leave your comment..." required></textarea>
+                    <button class="btn btn-sm" style="width: 100%">Submit Feedback</button>
                   </div>
                 </form>
               </div>
@@ -205,23 +214,7 @@
               </div>
             </div>
             {% endfor %}
-          </div>
-
-          <!-- Navigation Container -->
-          {% comment %} <div class="col-md-4 mx-auto">
-            <div class="navigation-container">
-              <div class="navigation-options">
-                <!-- Add your navigation options here -->
-                <h4>Navigation Options</h4>
-                <ul>
-                  <li><a href="#">Option 1</a></li>
-                  <li><a href="#">Option 2</a></li>
-                  <li><a href="#">Option 3</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>  {% endcomment %}
-          
+          </div>     
         </div>
       </div>
     </section>
