@@ -1,81 +1,103 @@
-
-
+{% extends "header_footer.html" %}
+{%load static%}
 {% block content %}
-<main class="create-room layout">
-  <div class="container">
-    <div class="layout__box">
-      <div class="layout__boxHeader">
-        <div class="layout__boxTitle">
-          <a href="{{request.META.HTTP_REFERER}}">
-            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-              <title>arrow-left</title>
-              <path
-                d="M13.723 2.286l-13.723 13.714 13.719 13.714 1.616-1.611-10.96-10.96h27.625v-2.286h-27.625l10.965-10.965-1.616-1.607z">
-              </path>
-            </svg>
-          </a>
-          <h3>Create/Update Study Room</h3>
-        </div>
-      </div>
-      <div class="layout__body">
-        <form class="form" action="" method="POST">
-          {% csrf_token %}
 
-          <div class="form__group">
-            <label for="room_topic">Room Faculty: </label>
-            <select name="faculty" id="id_faculty" class="custom-select" required>
+<style>
+  body {
+      color: #fff;
+  }
+
+  .profile-container {
+      max-width: 550px;
+      margin: auto;
+      margin-top: 50px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.1);
+      text-align: left; /* Align text to the left */
+  }
+
+  .profile-container h1 {
+      color: #fff;
+      text-align: center; /* Center the header text */
+  }
+
+  .btn-primary {
+      background-color: #2c2e3d;
+      border-color: #2c2e3d;
+      width: 60%;
+  }
+
+  .btn-primary:hover {
+      background-color: #536881;
+      border-color: #536881;
+  }
+
+</style>
+
+<section class="apply-now" id="apply">
+  <div class="container profile-container">
+    <h1 class="mb-4">Create/Update Study Room</h1>
+
+    <!-- Personal Information Form -->
+    <form class="form" action="" method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label" for="id_faculty">Room Faculty: </label>
+            <select name="faculty" id="id_faculty" class="form-control">
               <option value="">Select ...</option>
               {% for faculty in faculties %}
               <option value="{{ faculty.pk }}">{{ faculty.name }}</option>
               {% endfor %}
             </select>
-          </div>
+        </div>
 
-          <div class="form__group">
-            <label for="room_name">Room Name</label>
-            {{form.name}}
-          </div>
+        <div class="mb-3">
+            <label for="room_name" class="form-label">Room Name:</label>
+            <input type="text" class="form-control" id="name" name="name" value="" required>
+        </div>
 
-          <div class="form__group">
-            <label for="room_description">Room Description</label>
-            {{form.description}}
-          </div>
-          <div class="form__group">
-            <label for="room_description">Room Status</label>
+        <div class="mb-3">
+          
+            <label for="room_description" class="form-label">Room Description:</label>
+            <textarea type="text" class="form-control" id="description" name="description" value="" required></textarea>
+        </div>
 
-            <select id="room_status" name="is_private" onchange="toggleQuestionAnswer();">
+        <div class="mb-3">
+            <label for="room_status" class="form-label">Room Status (Select):</label>
+            <select id="room_status" class="form-control" name="is_private" onchange="toggleQuestionAnswer();">
               <option value="False">Public</option>
               <option value="True">Priavte</option>
             </select>
-          </div>
+        </div>
 
-          <div class="form__group question-answer"">
-            <label for="room_question">Room Question</label>
-            {{form.question}}
-          </div>
-          <div class="form__group question-answer"">
-            <label for="room_anwser">Room Keyword</label>
-            {{form.answer}}
-          </div>
-          
-          <div class="form__action">
-            <a class="btn btn--dark" href="{{request.META.HTTP_REFERER}}">Cancel</a>
-            <button class="btn btn--main" type="submit">Submit</button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div class="mb-3 question-answer">
+            <label for="room_question" class="form-label">Room Question:</label>
+            <input type="text" class="form-control" id="question" name="question" value="" required>
+        </div>
+
+        <div class="mb-3 question-answer">
+            <label for="room_anwser" class="form-label">Room Keyword:</label>
+            <input type="text" class="form-control" id="answer" name="answer" value="" required>
+        </div>
+      
+        <div class="text-center"> <!-- Center the button -->
+          <a class="btn btn-danger" href="{{request.META.HTTP_REFERER}}">Cancel</a>
+          <button type="submit" class="btn btn-primary">Create room</button>
+        </div>
+    </form>
   </div>
-  <script>
-    function toggleQuestionAnswer() {
-     var status = document.getElementById('room_status').value;
-     var displayStyle = status === 'True' ? 'block' : 'none'; // Show if Private is selected
-     document.querySelectorAll('.question-answer').forEach(function(element) {
-       element.style.display = displayStyle;
-     });
-   }
-   window.onload = toggleQuestionAnswer;
- </script>
-</main>
+</section>
+<script>
+  function toggleQuestionAnswer() {
+   var status = document.getElementById('room_status').value;
+   var displayStyle = status === 'True' ? 'block' : 'none'; // Show if Private is selected
+   document.querySelectorAll('.question-answer').forEach(function(element) {
+     element.style.display = displayStyle;
+   });
+ }
+ window.onload = toggleQuestionAnswer;
+</script>
 
 {% endblock content %}

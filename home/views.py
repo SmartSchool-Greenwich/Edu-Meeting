@@ -1053,7 +1053,7 @@ def createRoom(request):
             topic=topic,
             name=request.POST.get('name'),
             description=request.POST.get('description'),
-            is_private=request.POST.get('is_private') == 'True',
+            is_private=request.POST.get('is_private'),
             question=request.POST.get('question'),
             answer=request.POST.get('answer'),
         )
