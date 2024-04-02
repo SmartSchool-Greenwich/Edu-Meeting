@@ -68,8 +68,8 @@
             <label for="room_status" class="form-label">Room Status (Select):</label>
             <select id="room_status" class="form-control" name="is_private" onchange="toggleQuestionAnswer();">
               <option value="False">Public</option>
-              <option value="True">Priavte</option>
-            </select>
+              <option value="True">Private</option>
+            </select>            
         </div>
 
         <div class="mb-3 question-answer">
@@ -82,7 +82,7 @@
             <input type="text" class="form-control" id="answer" name="answer" value="" required>
         </div>
       
-        <div class="text-center"> <!-- Center the button -->
+        <div class="text-center">
           <a class="btn btn-danger" href="{{request.META.HTTP_REFERER}}">Cancel</a>
           <button type="submit" class="btn btn-primary">Create room</button>
         </div>
@@ -92,7 +92,7 @@
 <script>
   function toggleQuestionAnswer() {
    var status = document.getElementById('room_status').value;
-   var displayStyle = status === 'True' ? 'block' : 'none'; // Show if Private is selected
+   var displayStyle = status === 'True' ? 'block' : 'none';
    document.querySelectorAll('.question-answer').forEach(function(element) {
      element.style.display = displayStyle;
    });

@@ -736,7 +736,6 @@ def delete_role(request, role_id):
     
     role = get_object_or_404(Role, id=role_id)
     role.delete()
-    messages.success(request, 'The role has been successfully deleted!')
     return redirect('role_list') 
 
 
@@ -840,6 +839,19 @@ def statistical_analysis(request):
     is_manager = False
     is_guest = False
     is_admin = False
+
+    academic_years = AcademicYear.objects.all().order_by('-closure')
+
+    contributions_by_faculty_year = Contributions.objects.values('faculty__name', 'academic_Year__id').annotate(total=Count('id')).order_by()
+
+    contributions_data = {}
+    for item in contributions_by_faculty_year:
+        faculty_name = item['faculty__name']
+        year_id = item['academic_Year__id']
+        contributions_count = item['total']
+        if faculty_name not in contributions_data:
+            contributions_data[faculty_name] = {}
+        contributions_data[faculty_name][year_id] = contributions_count
     
     if request.user.is_authenticated:
         roles = [role.name for role in user_profile.roles.all()]
@@ -887,7 +899,17 @@ def statistical_analysis(request):
         "labels": [up.user.username for up in active_users],
         "data": [up.activities_count for up in active_users],
     }
+
+    student_accounts = UserProfile.objects.filter(roles__name='student')
+    faculty_accounts = student_accounts.values('faculty__name').annotate(total=Count('user_id'))
+    faculty_namess = [item['faculty__name'] for item in faculty_accounts]
+    faculty_countss = [item['total'] for item in faculty_accounts]
+
     context = {
+        'faculty_namess': faculty_namess,
+        'faculty_countss': faculty_countss,
+        'academic_years': academic_years,
+        'contributions_data': contributions_data,
         'user_labels': user_labels,
         'contributions_by_user': contributions_by_user,
         'time_labels': time_labels,
@@ -1035,7 +1057,6 @@ def room(request,pk):
         
     return redirect('list_room')
 
-
 @login_required(login_url='login')
 def createRoom(request):
     if not is_coordinators(request.user):
@@ -1048,21 +1069,22 @@ def createRoom(request):
         topic_id = request.POST.get('faculty')
         topic = Faculties.objects.get(pk=topic_id)
 
+        # Convert 'is_private' from string to boolean
+        is_private_value = request.POST.get('is_private')
+
         Room.objects.create(
             host=request.user.userprofile,
             topic=topic,
             name=request.POST.get('name'),
             description=request.POST.get('description'),
-            is_private=request.POST.get('is_private'),
+            is_private=is_private_value,  # Use the converted boolean value
             question=request.POST.get('question'),
             answer=request.POST.get('answer'),
         )
         return redirect('list_room')
 
     context = {'form': form, 'faculties': faculties}
-    return render(request, 'room_form.html', context)
-
-    
+    return render(request, 'room_form.html', context) 
 
 @login_required(login_url='login')
 def updateRoom(request,pk):
@@ -1092,29 +1114,16 @@ def updateRoom(request,pk):
 def deleteRoom(request,pk):
     if not is_coordinators(request.user):
         return redirect('error_404')
-    
+
     room = Room.objects.get(id = pk)
-    if request.method == 'POST':
-        room.delete()
-        return redirect('list_room')
-    return render(request,'delete.html',{'obj':room})
+    room.delete()
+    return redirect('list_room')
 
 @login_required
 def delete_file(request, file_id):
     file = get_object_or_404(RoomFile, id=file_id)
     file.delete()
     return redirect('room', pk=file.room.id)
-
-
-@login_required(login_url='login')
-def deleteMessage(request,pk):
-    message = Message.objects.get(id = pk)
-    if request.user == message.user :
-        if request.method == 'POST':
-            message.delete()
-            return redirect('room',pk=message.room.id)
-    return render(request,'delete.html',{'obj':message})
-
 
 def list_room(request):
     if is_admins(request.user):

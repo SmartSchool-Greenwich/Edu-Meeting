@@ -102,7 +102,7 @@ class Message(models.Model):
 
 class Contributions(models.Model):
     user = models.ManyToManyField(UserProfile)
-    title = models.CharField(max_length=30)
+    title = models.CharField(max_length=100)
     content = models.TextField(null = True)
     faculty = models.ForeignKey(Faculties,on_delete=models.CASCADE)
     term = models.BooleanField(default=False)

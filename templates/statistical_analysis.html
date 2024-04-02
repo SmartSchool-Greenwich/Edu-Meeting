@@ -126,6 +126,12 @@
                                 {% if is_guest or is_admin %}
                                 <div class="chart-container">
                                     <h3>Contributions by Faculty</h3>
+                                    <select id="academicYearFilter" onchange="updateContributionsChart()">
+                                        <option value="">Select Academic Year</option>
+                                        {% for year in academic_years %}
+                                        <option value="{{ year.id }}">{{ year.closure|date:"m/Y"}} - {{ year.finalClosure|date:"m/Y"}} </option>
+                                        {% endfor %}
+                                    </select>
                                     <canvas id="contributionsByFacultyPieChart"></canvas>
                                 </div>
                                 {% endif %}
@@ -149,6 +155,11 @@
                                     <h2>Top 10 Active Users</h2>
                                     <canvas id="activeUsersChart"></canvas>
                                 </div>   
+
+                                <div class="chart-container">
+                                    <h3>Number of Contributors</h3>
+                                    <canvas id="studentAccountsByFacultyBarChart"></canvas>
+                                </div>
                                 {% endif %}                                                         
                             </div>
                         </div>
@@ -301,6 +312,79 @@
                     }
                 }
             });
+
+            {% comment %} filter chart {% endcomment %}
+            var contributionsData = {{ contributions_data|safe }};
+                
+            var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#8e44ad', '#3498db', '#e67e22', '#2ecc71'];
+            
+            function updateContributionsChart() {
+                var selectedYear = document.getElementById('academicYearFilter').value;
+                var filteredData = {};
+                var facultyNames = Object.keys(contributionsData);
+                facultyNames.forEach(function(faculty) {
+                    if (contributionsData[faculty][selectedYear]) {
+                        filteredData[faculty] = contributionsData[faculty][selectedYear];
+                    }
+                });
+            
+                var chartLabels = Object.keys(filteredData);
+                var chartData = Object.values(filteredData);
+            
+                var ctx = document.getElementById('contributionsByFacultyPieChart').getContext('2d');
+                if (window.contributionsChart) window.contributionsChart.destroy(); 
+                window.contributionsChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            data: chartData,
+                            backgroundColor: colors, 
+                            borderColor: 'rgba(255, 255, 255, 0.5)', 
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        legend: {
+                            position: 'top',
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            }
+            </script>
+
+            <script>
+                var facultyChartLabels = {{ faculty_namess|safe }};
+                var facultyChartData = {{ faculty_countss|safe }};
+            
+                var studentAccountsByFacultyBarChartCtx = document.getElementById('studentAccountsByFacultyBarChart').getContext('2d');
+                var studentAccountsByFacultyBarChart = new Chart(studentAccountsByFacultyBarChartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: facultyChartLabels,
+                        datasets: [{
+                            label: 'Number of Student Accounts',
+                            data: facultyChartData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
             </script>
             
     </body>
