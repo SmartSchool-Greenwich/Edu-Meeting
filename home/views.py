@@ -1069,15 +1069,14 @@ def createRoom(request):
         topic_id = request.POST.get('faculty')
         topic = Faculties.objects.get(pk=topic_id)
 
-        # Convert 'is_private' from string to boolean
-        is_private_value = request.POST.get('is_private')
+        is_private_value = request.POST.get('is_private') == 'True'
 
         Room.objects.create(
             host=request.user.userprofile,
             topic=topic,
             name=request.POST.get('name'),
             description=request.POST.get('description'),
-            is_private=is_private_value,  # Use the converted boolean value
+            is_private=is_private_value, 
             question=request.POST.get('question'),
             answer=request.POST.get('answer'),
         )

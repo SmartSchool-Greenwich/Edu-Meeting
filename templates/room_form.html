@@ -91,13 +91,16 @@
 </section>
 <script>
   function toggleQuestionAnswer() {
-   var status = document.getElementById('room_status').value;
-   var displayStyle = status === 'True' ? 'block' : 'none';
-   document.querySelectorAll('.question-answer').forEach(function(element) {
-     element.style.display = displayStyle;
-   });
- }
- window.onload = toggleQuestionAnswer;
+      var isPrivate = document.getElementById('room_status').value === 'True';
+      var questionsAndAnswers = document.querySelectorAll('.question-answer');
+      for (var i = 0; i < questionsAndAnswers.length; i++) {
+          questionsAndAnswers[i].style.display = isPrivate ? 'block' : 'none';
+          var inputs = questionsAndAnswers[i].querySelectorAll('input');
+          for (var j = 0; j < inputs.length; j++) {
+              inputs[j].required = isPrivate;
+          }
+      }
+  }
+  document.addEventListener('DOMContentLoaded', toggleQuestionAnswer);
 </script>
-
 {% endblock content %}
