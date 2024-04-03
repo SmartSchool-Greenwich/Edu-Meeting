@@ -107,6 +107,14 @@
                 <main>
                     <div class="container-fluid px-4">
                         <h1 class="mt-4">Statistical Analysis</h1>
+                        {% if is_coordinator %}
+                            <div class="text-center">
+                                <p style="margin: 0px"><span style="color: red;">Students</span> in the {{request.user.userprofile.faculty}} Faculty: <span style="color: blue; font-size: 25px;">{{ total_students }}</span></p>
+                            </div>
+                            <div class="text-center">
+                                <p><span style="color: red;">Contributions</span> in the {{request.user.userprofile.faculty}} Faculty: <span style="color: blue; font-size: 25px;">{{ total_contribution }}</span></p>
+                            </div>
+                        {% endif %}
                         <div class="card mb-4">
                             <div class="card-body">
                                 {% if is_coordinator or is_admin %}
@@ -162,7 +170,21 @@
                                     <h3>Number of Contributors</h3>
                                     <canvas id="studentAccountsByFacultyBarChart"></canvas>
                                 </div>
-                                {% endif %}                                                         
+                                {% endif %}   
+                                
+                                {% if is_manager or is_coordinator %}
+                                <div class="chart-container">
+                                    <h3>Percentage of total contributions by status</h3>
+                                    <canvas id="totalContributionsStatusPieChart"></canvas>
+                                </div>   
+                                {% endif %}
+
+                                {% if is_coordinator %}
+                                <div class="chart-container">
+                                    <h3>Contributions without comments by faculty</h3>
+                                    <canvas id="commentsByFacultyPieChart"></canvas>
+                                </div>   
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -206,6 +228,14 @@
                 if (document.getElementById('contributionsByUserColumnChart')) {
                     createColumnChart('contributionsByUserColumnChart', {{ user_labels|safe }}, {{ contributions_by_user|safe }}, 'Contributions per User', '#1cc88a');
                 }
+
+                {% if is_manager or is_coordinator %}
+                    createPieChart('totalContributionsStatusPieChart', Object.keys({{ total_status_percentages|safe }}), Object.values({{ total_status_percentages|safe }}), ['#4e73df', '#1cc88a', '#e74a3b']);
+                {% endif %}
+
+                {% if is_coordinator %}
+                    createPieChart('commentsByFacultyPieChart', Object.keys({{ comments_by_faculty_percentages|safe }}), Object.values({{ comments_by_faculty_percentages|safe }}), ['#4e73df', '#1cc88a','#fdba74']);
+                {% endif %}
             });
             
             function createPieChart(chartId, labels, data, backgroundColors) {

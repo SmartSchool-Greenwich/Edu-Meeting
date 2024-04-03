@@ -154,9 +154,9 @@
               </div>
             </div>
             <div class="roomListRoom__content">
-              <a href="{% url 'room' room.id %}">{{room.name}}</a>
+              <a href="{% url 'room' room.id %}">Room name: {{room.name}}</a>
               <p>
-                {{room.description}}
+                Description: {{room.description}}
               </p>
             </div>
             <div class="roomListRoom__meta">

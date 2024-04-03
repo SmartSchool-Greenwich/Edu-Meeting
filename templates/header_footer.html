@@ -116,7 +116,7 @@ https://templatemo.com/tm-569-edu-meeting
               <li >
                 <a href="{% url 'profile' %}">hello {{ request.user.userprofile.fullname }}</a>
               </li>
-              {% if not is_admin %}
+              {% if not is_admin and not is_guest %}
               <li>
                 <a href="{% url 'list_room'%}">Chat Room</a>
               </li>

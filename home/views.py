@@ -392,6 +392,7 @@ def faculty_files(request, faculty_id):
     faculty = get_object_or_404(Faculties, pk=faculty_id)
     files = ContributionFiles.objects.filter(contribution__in=contributions).distinct()
     comment_form = CommentForm()   
+    dayCanComment = 14 - (timezone.now() - contribution.createAt).days
 
     if request.method == 'POST':
         comment_form = CommentForm(request.POST)
@@ -416,7 +417,8 @@ def faculty_files(request, faculty_id):
                                                  'show_faculties': show_faculties,
                                                  'is_manager': is_manager,
                                                  'is_coordinator': is_coordinator,
-                                                 'can_comment': can_comment,})
+                                                 'can_comment': can_comment,
+                                                 'dayCanComment': dayCanComment,})
                                                  
 def download_selected_contributions(request):
     if not is_managers(request.user):
@@ -534,6 +536,8 @@ def contributions_detail(request, contribution_id):
         comment_form = CommentForm()
         file_form = FileForm()
 
+    dayCanComment = 14 - (timezone.now() - contribution.createAt).days
+
     return render(request, 'contributions_detail.html', {
         'contribution': contribution,
         'comments': comments,
@@ -545,6 +549,7 @@ def contributions_detail(request, contribution_id):
         'is_manager': is_manager,
         'faculties': faculties,
         'can_comment': can_comment,
+        'dayCanComment': dayCanComment,
     })    
 
 
@@ -839,6 +844,8 @@ def statistical_analysis(request):
     is_manager = False
     is_guest = False
     is_admin = False
+    total_students = 0
+    total_contribution = 0
 
     academic_years = AcademicYear.objects.all().order_by('-closure')
 
@@ -877,8 +884,17 @@ def statistical_analysis(request):
     time_labels = [item['createAt__date'].strftime('%Y-%m-%d') for item in contributions_over_time]
     contributions_counts = [item['total'] for item in contributions_over_time]
 
+    #2
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
+    waiting_contributions = Contributions.objects.filter(status="waiting").count()
+    rejected_contributions = Contributions.objects.filter(status="reject").count()
+
+    total_status_percentages = {
+        'Approved': (approved_contributions / total_contributions) * 100,
+        'Waiting': (waiting_contributions / total_contributions) * 100,
+        'Rejected': (rejected_contributions / total_contributions) * 100
+    }
 
     contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
     approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
@@ -905,7 +921,31 @@ def statistical_analysis(request):
     faculty_namess = [item['faculty__name'] for item in faculty_accounts]
     faculty_countss = [item['total'] for item in faculty_accounts]
 
+
+    #4 
+    contributions_with_comments = Contributions.objects.filter(comment__isnull=False).values('faculty__name').annotate(total=Count('id'))
+
+    contribution_percentages_with_comments = {}
+    for item in contributions_by_faculty:
+        faculty_name = item['faculty__name']
+        total = item['total']
+        with_comments = next((i['total'] for i in contributions_with_comments if i['faculty__name'] == faculty_name), 0)
+
+        contribution_percentages_with_comments[faculty_name] = (with_comments / total) * 100
+    #5   
+    if is_coordinator:
+        coordinator_faculty = user_profile.faculty
+        total_students = UserProfile.objects.filter(faculty=coordinator_faculty, roles__name='student').count()
+
+    #6
+    if is_coordinator:
+        total_contribution = Contributions.objects.filter(faculty=coordinator_faculty).count()
+
     context = {
+        'total_students': total_students,
+        'total_contribution': total_contribution,
+        'comments_by_faculty_percentages': contribution_percentages_with_comments,
+        'total_status_percentages': total_status_percentages,
         'faculty_namess': faculty_namess,
         'faculty_countss': faculty_countss,
         'academic_years': academic_years,
@@ -985,7 +1025,7 @@ def reject_contribution(request, contribution_id):
         contribution.save()
         return redirect('manage_contributions')
     else:
-        return redirect('some_view')
+        return redirect('home')
     
 def term_policy(request):
     return render(request, 'terms_policies.html')
@@ -1000,7 +1040,7 @@ def error_404(request):
 
 @login_required
 def room(request,pk):
-    if is_admins(request.user):
+    if is_admins(request.user) or is_guests(request.user):
         return redirect('error_404')
     
     room = Room.objects.get(id=pk)
@@ -1120,12 +1160,15 @@ def deleteRoom(request,pk):
 
 @login_required
 def delete_file(request, file_id):
+    if not is_coordinators(request.user):
+        return redirect('error_404')
+    
     file = get_object_or_404(RoomFile, id=file_id)
     file.delete()
     return redirect('room', pk=file.room.id)
 
 def list_room(request):
-    if is_admins(request.user):
+    if is_admins(request.user) or is_guests(request.user):
         return redirect('error_404')
     
     user_profile = get_object_or_404(UserProfile, user=request.user)
