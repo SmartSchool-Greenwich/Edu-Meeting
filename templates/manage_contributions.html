@@ -79,7 +79,6 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                             </form>
-                            <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
                                 <table class="table mt-3">
                                     <thead class="thead-dark">
                                     <tr>
@@ -125,7 +124,8 @@
                                             <div class="text-center">
                                             {% if contribution.status == 'waiting' %}
                                                 <a href="{% url 'approve_contribution' contribution.id %}?approve=app" class="btn btn-success btn-sm">Approve</a> | 
-                                                <a href="{% url 'reject_contribution' contribution.id %}" class="btn btn-danger reject-btn btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-contribution-id="{{ contribution.id }}">Reject</a> | 
+                                                <a href="#" class="btn btn-danger reject-btn btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-contribution-id="{{ contribution.id }}">Reject</a>
+| 
                                                 <a href="{% url 'contributions_detail' contribution.id %}" class="btn btn-warning btn-sm">View Detail</a>
                                             {% elif contribution.status == 'approved' %}
                                                 <a href="{% url 'approve_contribution' contribution.id %}?approve=dis" class="btn btn-danger btn-sm">Disapprove</a> | 
@@ -159,16 +159,19 @@
                                     {% endfor %}
                                     </tbody>
                                 </table>
+
                                 {% if is_manager %}
-                                <button type="submit" id="download-selected-button" class="btn btn-primary btn-sm" style="float: right" disabled>Download Selected Files</button>
+                                <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
+                                    {% csrf_token %}
+                                    <button type="submit" id="download-selected-button" class="btn btn-primary btn-sm" style="float: right" disabled>Download Selected Files</button>
+                                </form>
                                 {% endif %} 
-                            </form>
                             </div>
                         </div>
                     </div>
                     
                    <!-- Reject Modal -->
-                <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+                   <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -240,17 +243,20 @@
                     checkbox.addEventListener('change', updateDownloadButtonState);
                 });
 
-                var rejectButtons = document.querySelectorAll('.reject-btn');
-                rejectButtons.forEach(function(btn) {
-                  btn.addEventListener('click', function() {
-                    var contributionId = btn.getAttribute('data-contribution-id');
-                    var form = document.getElementById('rejectForm');
-                    form.action = '/ad/contribution/reject/' + contributionId + '/';
-                    document.getElementById('contributionId').value = contributionId;
-                  });
-                });
+                
 
             });
+
+            document.addEventListener("DOMContentLoaded", function() {
+    var rejectButtons = document.querySelectorAll('.reject-btn');
+    rejectButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var contributionId = btn.getAttribute('data-contribution-id');
+            var form = document.getElementById('rejectForm');
+            form.action = `/ad/contribution/reject/${contributionId}/`; // Sử dụng template string để chèn ID
+        });
+    });
+});
             </script>
     </body>
 </html>
