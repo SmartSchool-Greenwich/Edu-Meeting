@@ -886,7 +886,7 @@ def statistical_analysis(request):
     total_contributions = Contributions.objects.count()
     approved_contributions = Contributions.objects.filter(status="approved").count()
     waiting_contributions = Contributions.objects.filter(status="waiting").count()
-    rejected_contributions = Contributions.objects.filter(status="reject").count()
+    rejected_contributions = Contributions.objects.filter(status="rejected").count()
 
     total_status_percentages = {
         'Approved': (approved_contributions / total_contributions) * 100,
