@@ -703,8 +703,6 @@ def update_faculty(request, faculty_id):
     if request.method == "POST":
         faculty.name = request.POST.get('name')
         faculty.description = request.POST.get('description')
-        academicYear_id = request.POST.get('academicYear')
-        faculty.academicYear = AcademicYear.objects.get(id=academicYear_id)
         faculty.save()
         return redirect('list_faculties')
     academic_years = AcademicYear.objects.all()

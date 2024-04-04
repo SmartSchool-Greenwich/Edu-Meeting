@@ -145,10 +145,13 @@
                   {% endfor %}
                   {% if not contribution.is_expired %}
                     {% if not is_coordinator and not is_manager %}
+                    {% if contribution.status != 'approved' %}
                     <a href="{% url 'update_contribution' pk=contribution.id %}" type="submit" class="btn btn-primary" >
                       Update contribution
                     </a>  
                     {% endif %}
+                    {% endif %}
+
                   {% endif %}
                 </form>
               </div>
