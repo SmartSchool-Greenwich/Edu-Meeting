@@ -12,11 +12,12 @@ from io import BytesIO
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, F, ExpressionWrapper, fields
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Q
 from datetime import datetime, timedelta
+from django.core.serializers.json import DjangoJSONEncoder
 import zipfile
 import re
 
@@ -837,6 +838,8 @@ def account_delete(request, pk):
 
 import json
 def statistical_analysis(request):
+    if is_students(request.user):
+        return redirect('error_404')
     user_profile = get_object_or_404(UserProfile, user=request.user)
     is_coordinator = False
     is_manager = False
@@ -894,7 +897,11 @@ def statistical_analysis(request):
         'Rejected': (rejected_contributions / total_contributions) * 100
     }
 
-    contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
+    if is_guest:
+        guest_faculty = user_profile.faculty.name
+        contributions_by_faculty = Contributions.objects.filter(faculty__name=guest_faculty).values('faculty__name').annotate(total=Count('id'))
+    else:
+        contributions_by_faculty = Contributions.objects.values('faculty__name').annotate(total=Count('id'))
     approved_by_faculty = Contributions.objects.filter(status="approved").values('faculty__name').annotate(total=Count('id'))
 
     faculty_names = [item['faculty__name'] for item in contributions_by_faculty]
@@ -914,34 +921,69 @@ def statistical_analysis(request):
         "data": [up.activities_count for up in active_users],
     }
 
-    student_accounts = UserProfile.objects.filter(roles__name='student')
-    faculty_accounts = student_accounts.values('faculty__name').annotate(total=Count('user_id'))
+    student_accounts = UserProfile.objects.filter(roles__name='student').annotate(contributions_count=Count('contributions')).filter(contributions_count__gt=0)
+    
+    student_accounts_with_contributions = UserProfile.objects.filter(roles__name='student', contributions__isnull=False).distinct()
+
+    faculty_accounts = student_accounts_with_contributions.values('faculty__name').annotate(total=Count('user', distinct=True))
+
     faculty_namess = [item['faculty__name'] for item in faculty_accounts]
     faculty_countss = [item['total'] for item in faculty_accounts]
 
 
+
     #4 
     contributions_with_comments = Contributions.objects.filter(comment__isnull=False).values('faculty__name').annotate(total=Count('id'))
-
     contribution_percentages_with_comments = {}
     for item in contributions_by_faculty:
         faculty_name = item['faculty__name']
         total = item['total']
         with_comments = next((i['total'] for i in contributions_with_comments if i['faculty__name'] == faculty_name), 0)
 
-        contribution_percentages_with_comments[faculty_name] = (with_comments / total) * 100
-    #5   
+        contribution_percentages_with_comments[faculty_name] = with_comments
+
+    #5
+    contributions_without_comments = Contributions.objects.filter(comment__isnull=True).values('faculty__name').annotate(total=Count('id'))
+
+    contribution_percentages_without_comments = {}
+    for item in contributions_by_faculty:
+        faculty_name = item['faculty__name']
+        total = item['total']
+        without_comments = next((i['total'] for i in contributions_without_comments if i['faculty__name'] == faculty_name), 0)
+        
+        if total > 0:
+            percentage_without_comments = without_comments
+        else:
+            percentage_without_comments = 0
+        
+        contribution_percentages_without_comments[faculty_name] = percentage_without_comments
+
+    #6   
     if is_coordinator:
         coordinator_faculty = user_profile.faculty
         total_students = UserProfile.objects.filter(faculty=coordinator_faculty, roles__name='student').count()
 
-    #6
+    #7
     if is_coordinator:
         total_contribution = Contributions.objects.filter(faculty=coordinator_faculty).count()
 
+    #8
+    now = timezone.now()
+    fourteen_days_ago = now - timedelta(days=14)
+
+    contributions_no_comment_after_14_days = Contributions.objects.filter(
+        createAt__lte=fourteen_days_ago,
+        comment__isnull=True
+    ).values('faculty__name').annotate(total=Count('id')).order_by('faculty__name')
+
+    contributions_no_comment_after_14_days_data = json.dumps(list(contributions_no_comment_after_14_days), cls=DjangoJSONEncoder)
+
+
     context = {
+        'contributions_no_comment_after_14_days_data': contributions_no_comment_after_14_days_data,
         'total_students': total_students,
         'total_contribution': total_contribution,
+        'contributions_without_comments_data': json.dumps(contribution_percentages_without_comments),
         'comments_by_faculty_percentages': contribution_percentages_with_comments,
         'total_status_percentages': total_status_percentages,
         'faculty_namess': faculty_namess,

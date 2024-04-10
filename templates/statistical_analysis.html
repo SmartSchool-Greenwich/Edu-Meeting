@@ -179,12 +179,17 @@
                                 </div>   
                                 {% endif %}
 
-                                {% if is_coordinator %}
+                                {% if is_admin %}
                                 <div class="chart-container">
                                     <h3>Contributions without comments by faculty</h3>
-                                    <canvas id="commentsByFacultyPieChart"></canvas>
+                                    <canvas id="contributionsWithoutCommentsByFacultyBarChart"></canvas>
                                 </div>   
-                                {% endif %}
+                                
+                                <div class="chart-container">
+                                    <h3>Contributions without comments after 14 days by faculty</h3>
+                                    <canvas id="contributionsNoCommentAfter14DaysBarChart"></canvas>
+                                </div>                                
+                                {% endif %}                             
                             </div>
                         </div>
                     </div>
@@ -233,10 +238,53 @@
                     createPieChart('totalContributionsStatusPieChart', Object.keys({{ total_status_percentages|safe }}), Object.values({{ total_status_percentages|safe }}), ['#4e73df', '#1cc88a', '#e74a3b']);
                 {% endif %}
 
-                {% if is_coordinator %}
-                    createPieChart('commentsByFacultyPieChart', Object.keys({{ comments_by_faculty_percentages|safe }}), Object.values({{ comments_by_faculty_percentages|safe }}), ['#4e73df', '#1cc88a','#fdba74']);
-                {% endif %}
+                const contributionsWithoutCommentsData = JSON.parse('{{ contributions_without_comments_data | safe }}');
+                createBarChart('contributionsWithoutCommentsByFacultyBarChart', Object.keys(contributionsWithoutCommentsData), Object.values(contributionsWithoutCommentsData), 'Contributions without Comments', colors);
+            
+                const contributionsNoCommentAfter14DaysData = JSON.parse('{{ contributions_no_comment_after_14_days_data | safe }}');
+                const labelsNoComments = contributionsNoCommentAfter14DaysData.map(item => item.faculty__name);
+                const dataNoComments = contributionsNoCommentAfter14DaysData.map(item => item.total);
+                createBarChart('contributionsNoCommentAfter14DaysBarChart', labelsNoComments, dataNoComments, 'Contributions without Comments after 14 Days', colors.slice(0, labelsNoComments.length));
             });
+
+            var colors = [
+                'rgba(78, 115, 223, 0.8)', // Blue
+                'rgba(28, 200, 138, 0.8)', // Green
+                'rgba(54, 185, 204, 0.8)', // Teal
+                'rgba(246, 194, 62, 0.8)', // Yellow
+                'rgba(231, 74, 59, 0.8)',  // Red
+                'rgba(133, 135, 150, 0.8)',// Gray
+                'rgba(142, 68, 173, 0.8)', // Purple
+                'rgba(52, 152, 219, 0.8)', // Light Blue
+                'rgba(230, 126, 34, 0.8)', // Orange
+                'rgba(46, 204, 113, 0.8)'  // Light Green
+            ];
+
+            function createBarChart(chartId, labels, data, label, colors) {
+                var ctx = document.getElementById(chartId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length), // Use slice to match the number of data points
+                            borderColor: colors.map(color => color.replace('0.8', '1')), // Increase opacity for border
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+            }
             
             function createPieChart(chartId, labels, data, backgroundColors) {
                 new Chart(document.getElementById(chartId), {
@@ -345,7 +393,6 @@
                 }
             });
 
-            {% comment %} filter chart {% endcomment %}
             var contributionsData = {{ contributions_data|safe }};
                 
             var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#8e44ad', '#3498db', '#e67e22', '#2ecc71'];
