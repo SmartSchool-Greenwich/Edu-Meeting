@@ -151,7 +151,6 @@
                     </a>  
                     {% endif %}
                     {% endif %}
-
                   {% endif %}
                 </form>
               </div>
@@ -164,7 +163,9 @@
                 <div class="navigation-options">
                   <!-- Add your navigation options here -->
                   <h4 style="margin-bottom: 5px;">Contribution feedbacks:</h4>
-                  <smal>({{dayCanComment}} days left to give feedbacks)</small>
+                  {% if is_coordinator %}
+                    <smal>({{dayCanComment}} days left to give feedbacks)</small>
+                  {% endif %}
                   <div class="feedback-box">
                     {% if comments.count == 0 %}
                       <p>

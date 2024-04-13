@@ -49,7 +49,13 @@ https://templatemo.com/tm-569-edu-meeting
       <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
     {% elif 'username_exist' in message.tags %}
       <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'register_success' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'logout_success' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
     {% elif 'password_notmatch' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'profile_update' in message.tags %}
       <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
     {% endif %}
   {% endfor %}

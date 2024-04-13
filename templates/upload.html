@@ -140,7 +140,7 @@
               <div class="row">
 
                 <div class="col-12">
-                  <select name="academic" id="academic" class="custom-select">
+                  <select name="academic" id="academic" class="custom-select" required>
                     <option value="">Select Academic Year ...</option>
                     {% for faculty in valid_academic_years %}
                     <option value="{{ faculty.id }}">Years: {{ faculty.closure|date:'Y' }} - {{ faculty.finalClosure|date:'Y' }} | Closure date: {{ faculty.closure }}</option>

@@ -73,7 +73,7 @@
                                     <select class="form-select" id="academicYearFilter" name="academic_year">
                                         <option value="">-- Select Academic Year --</option>
                                         {% for academic_year in all_academic_years %}
-                                            <option value="{{ academic_year.id }}">{{ academic_year }}</option>
+                                            <option value="{{ academic_year.id }}">Years: {{ academic_year.closure|date:'Y' }} - {{ academic_year.finalClosure|date:'Y' }} | Closure date: {{ academic_year.closure }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>

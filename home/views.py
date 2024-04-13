@@ -90,6 +90,7 @@ def register_view(request):
                     faculty = Faculties.objects.get(id=faculty_id) if faculty_id else None
                     
                     userprofile = UserProfile.objects.create(user=user, fullname=fullname, email=email, phone=phone, faculty=faculty)
+                    messages.error(request, 'Successful account registration.', extra_tags='register_success')
                     return redirect('login')
             else:
                 messages.error(request, 'Confirm password do not match', extra_tags='password_notmatch')
@@ -100,6 +101,7 @@ def register_view(request):
 
 def logout_view(request):
     logout(request)
+    messages.error(request, 'Log out successfully.', extra_tags='logout_success')
     return redirect('home')
 
 
@@ -470,7 +472,8 @@ def update_profile(request):
         user_profile.email = request.POST.get('email', '')
         user_profile.phone = request.POST.get('phone', '')
         user_profile.save()
-        return redirect('home')
+        messages.error(request, 'Account information has just been updated.', extra_tags='profile_update')
+        return redirect('profile')
     else:
         return render(request, 'update_profile.html', {'user_profile': user_profile,
                                                        'faculties': faculties,
