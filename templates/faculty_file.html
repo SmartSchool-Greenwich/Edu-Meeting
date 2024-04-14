@@ -179,7 +179,13 @@
               {% endif %}
               {% if not is_guest and not is_manager %}
               <h5 style="margin-bottom: 5px;">Contribution feedbacks:</h5>
-              <smal>({{dayCanComment}} days left to give feedbacks)</small>
+              {% if is_coordinator %}
+                {% if dayCanComment < 0 %}
+                  <smal>(You can't give feedbacks anymore)</small>
+                {% else %}
+                  <smal>({{dayCanComment}} days left to give feedbacks)</small>
+                {% endif %}
+              {% endif %}
               <div class="feedback-box">
                 {% if contribution.comments.count == 0 %}
                   <p><strong>No one has commented yet...</strong></p>

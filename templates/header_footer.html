@@ -57,6 +57,8 @@ https://templatemo.com/tm-569-edu-meeting
       <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
     {% elif 'profile_update' in message.tags %}
       <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
+    {% elif 'wrong_answer' in message.tags %}
+      <div class="text-center alert-info" role="alert" style="padding: 0.5rem 0.5rem;">{{ message }}</div>
     {% endif %}
   {% endfor %}
   {% endif %}

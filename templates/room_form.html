@@ -38,8 +38,11 @@
 
 <section class="apply-now" id="apply">
   <div class="container profile-container">
-    <h1 class="mb-4">Create/Update Study Room</h1>
-
+    {% if page == "create" %}
+    <h1 class="mt-4">Create New Chat Room</h1>
+    {% else %}
+        <h1 class="mt-4">Update Chat Room</h1>
+    {% endif %}
     <!-- Personal Information Form -->
     <form class="form" action="" method="POST">
         {% csrf_token %}

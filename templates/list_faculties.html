@@ -96,8 +96,9 @@
                                           <td>{{ faculty.name }}</td>
                                           <td>{{ faculty.description }}</td>
                                           <td>
-                                              <a href="{% url 'update_faculty' faculty.id %}" class="btn btn-info btn-sm">Update</a> | 
-                                              <a href="{% url 'remove_faculty' faculty.id %}" class="btn btn-danger btn-sm">Remove</a>
+                                              <a href="{% url 'update_faculty' faculty.id %}" class="btn btn-info btn-sm">Update</a>
+                                                | 
+                                              <a href="{% url 'remove_faculty' faculty.id %}" class="btn btn-danger btn-sm"  onclick="return confirm('Are you sure you want to delete?');">Remove</a>
                                           </td>
                                       </tr>
                                       {% endfor %}

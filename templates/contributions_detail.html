@@ -164,7 +164,11 @@
                   <!-- Add your navigation options here -->
                   <h4 style="margin-bottom: 5px;">Contribution feedbacks:</h4>
                   {% if is_coordinator %}
-                    <smal>({{dayCanComment}} days left to give feedbacks)</small>
+                    {% if dayCanComment < 0 %}
+                      <smal>(You can't give feedbacks anymore)</small>
+                    {% else %}
+                      <smal>({{dayCanComment}} days left to give feedbacks)</small>
+                    {% endif %}
                   {% endif %}
                   <div class="feedback-box">
                     {% if comments.count == 0 %}

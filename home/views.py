@@ -384,7 +384,7 @@ def faculty_files(request, faculty_id):
             faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
         elif "guest" in roles:
             is_guest = True
-            faculties = Faculties.objects.all() 
+            faculties = Faculties.objects.filter(id=faculty.id) if faculty else Faculties.objects.none()
             contributions = Contributions.objects.filter(faculty_id=faculty_id, status="approved")
 
         if "marketing coordinator" in roles and (timezone.now() - contribution.createAt).days > 14:
@@ -1135,7 +1135,7 @@ def room(request,pk):
                 return redirect('room', pk=room.id)
             else:
                 return redirect('list_room')
-            
+             
         return render(request, 'room_question.html', {'room': room})
         
     return redirect('list_room')
@@ -1147,6 +1147,7 @@ def createRoom(request):
     
     form = RoomForm()
     faculties = Faculties.objects.all()
+    page = "create"
 
     if request.method == 'POST':
         topic_id = request.POST.get('faculty')
@@ -1165,7 +1166,7 @@ def createRoom(request):
         )
         return redirect('list_room')
 
-    context = {'form': form, 'faculties': faculties}
+    context = {'form': form, 'faculties': faculties, 'page': page}
     return render(request, 'room_form.html', context) 
 
 @login_required(login_url='login')
@@ -1179,10 +1180,10 @@ def updateRoom(request,pk):
     if request.user.userprofile != room.host:
         return HttpResponse('')
     if request.method == 'POST':
-        topic_name = request.POST.get('topic')
-        faculties, created = Faculties.objects.get_or_create(name = topic_name)
+        topic_name = request.POST.get('faculty')
+        faculty = Faculties.objects.get_or_create(name=topic_name)
         room.name = request.POST.get('name')
-        room.topic = faculties
+        room.topic = faculty[0]
         room.description = request.POST.get('description')
         room.password = request.POST.get('password')
         room.save()
