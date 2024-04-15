@@ -77,6 +77,17 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+                                {% if is_manager %}
+                                <div class="mb-3">
+                                    <label for="facultyFilter" class="form-label">Filter by Faculty:</label>
+                                    <select class="form-select" id="facultyFilter" name="faculty">
+                                        <option value="">-- Select Faculty --</option>
+                                        {% for faculty in all_faculties %}
+                                            <option value="{{ faculty.id }}">{{ faculty.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% endif %}
                                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                             </form>
                             <form action="{% url 'download_selected_contributions' %}" method="post" enctype="">
@@ -126,8 +137,7 @@
                                             <div class="text-center">
                                             {% if contribution.status == 'waiting' %}
                                                 <a href="{% url 'approve_contribution' contribution.id %}?approve=app" class="btn btn-success btn-sm">Approve</a> | 
-                                                <a href="#" class="btn btn-danger reject-btn btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-contribution-id="{{ contribution.id }}">Reject</a>
-| 
+                                                <a href="#" class="btn btn-danger reject-btn btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-contribution-id="{{ contribution.id }}">Reject</a>| 
                                                 <a href="{% url 'contributions_detail' contribution.id %}" class="btn btn-warning btn-sm">View Detail</a>
                                             {% elif contribution.status == 'approved' %}
                                                 <a href="{% url 'approve_contribution' contribution.id %}?approve=dis" class="btn btn-danger btn-sm">Disapprove</a> | 
@@ -196,7 +206,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
 
                 </main>
                 <footer class="py-4 bg-light mt-auto">

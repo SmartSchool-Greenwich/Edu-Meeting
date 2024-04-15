@@ -762,6 +762,10 @@ def all_contributions_view(request):
         if "marketing manager" in roles:
             is_manager = True
             contributions = Contributions.objects.filter(status="approved")
+
+            faculty_id = request.GET.get('faculty')
+            if faculty_id:
+                contributions = contributions.filter(faculty_id=faculty_id)
         else:
             is_coordinator = True
             contributions = Contributions.objects.filter(faculty=faculty)
@@ -774,6 +778,7 @@ def all_contributions_view(request):
         )
 
     all_academic_years = AcademicYear.objects.all()
+    all_faculties = Faculties.objects.all()
 
     academic_year_id = request.GET.get('academic_year')
     if academic_year_id:
@@ -784,6 +789,7 @@ def all_contributions_view(request):
         'is_manager': is_manager,
         'is_coordinator': is_coordinator,
         'all_academic_years': all_academic_years,
+        'all_faculties': all_faculties,
     }
     return render(request, 'manage_contributions.html', context)
 
@@ -1088,7 +1094,7 @@ def room(request,pk):
     
     room = Room.objects.get(id=pk)
     pa = room.participants.all()
-    messages = room.message_set.all()
+    messagess = room.message_set.all()
     files = room.files.all() 
     can_upload = False
     
@@ -1118,7 +1124,7 @@ def room(request,pk):
             return redirect('room',pk=room.id)
         
         context = {'rooms':room,
-                    'message':messages, 
+                    'message':messagess, 
                     'participants': pa,
                     'created_at': datetime.now(), 
                     'files': files,
@@ -1134,8 +1140,8 @@ def room(request,pk):
                 room.participants.add(request.user.userprofile)
                 return redirect('room', pk=room.id)
             else:
-                return redirect('list_room')
-             
+                messages.error(request, 'Wrong answer!!!', extra_tags='kw_wrong')
+            
         return render(request, 'room_question.html', {'room': room})
         
     return redirect('list_room')
@@ -1170,28 +1176,33 @@ def createRoom(request):
     return render(request, 'room_form.html', context) 
 
 @login_required(login_url='login')
-def updateRoom(request,pk):
+def updateRoom(request, pk):
     if not is_coordinators(request.user):
         return redirect('error_404')
     
-    room = Room.objects.get(id= pk)
-    form = RoomForm(instance=room)
+    room = Room.objects.get(id=pk)
     faculties = Faculties.objects.all()
+
     if request.user.userprofile != room.host:
-        return HttpResponse('')
+        return HttpResponse('Unauthorized', status=401)
+
     if request.method == 'POST':
         topic_name = request.POST.get('faculty')
-        faculty = Faculties.objects.get_or_create(name=topic_name)
         room.name = request.POST.get('name')
-        room.topic = faculty[0]
         room.description = request.POST.get('description')
-        room.password = request.POST.get('password')
-        room.save()
+        room.question = request.POST.get('question')
+        room.answer = request.POST.get('answer')
+        
+        room.is_private = request.POST.get('is_private') == 'True'
 
+        faculty, created = Faculties.objects.get_or_create(id=topic_name)
+        room.topic = faculty
+        
+        room.save()
         return redirect('list_room')
 
-    context = {'form':form,'faculties':faculties,'room':room}
-    return render(request,'room_form.html',context)
+    context = {'faculties': faculties, 'room': room}
+    return render(request, 'room_form.html', context)
 
 @login_required(login_url='login')
 def deleteRoom(request,pk):
