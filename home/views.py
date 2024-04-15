@@ -1140,7 +1140,7 @@ def room(request,pk):
                 room.participants.add(request.user.userprofile)
                 return redirect('room', pk=room.id)
             else:
-                messages.error(request, 'Wrong answer!!!', extra_tags='kw_wrong')
+                messages.error(request, 'Wrong answer! Please try again.')
             
         return render(request, 'room_question.html', {'room': room})
         
@@ -1199,7 +1199,7 @@ def updateRoom(request, pk):
         room.topic = faculty
         
         room.save()
-        return redirect('list_room')
+        return redirect('room', pk=room.id)
 
     context = {'faculties': faculties, 'room': room}
     return render(request, 'room_form.html', context)

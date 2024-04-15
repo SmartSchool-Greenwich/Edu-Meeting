@@ -38,7 +38,11 @@
 
 <section class="apply-now" id="apply">
   <div class="container profile-container">
-    <h1 class="mb-4">Create/Update Study Room</h1>
+    {% if page == "create" %}
+        <h1 class="mt-4">Create New Chat Room</h1>
+    {% else %}
+        <h1 class="mt-4">Update Chat Room</h1>
+    {% endif %}
 
     <!-- Personal Information Form -->
     <form class="form" action="" method="POST">
@@ -84,7 +88,11 @@
       
         <div class="text-center">
           <a class="btn btn-danger" href="{{request.META.HTTP_REFERER}}">Cancel</a>
-          <button type="submit" class="btn btn-primary">Create room</button>
+            {% if page == "create" %}
+            <button type="submit" class="btn btn-primary">Create room</button>
+            {% else %}
+            <button type="submit" class="btn btn-primary">Update room</button>
+            {% endif %}
         </div>
     </form>
   </div>
